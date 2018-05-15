@@ -66,6 +66,7 @@ PACKAGES = find_packages(
 PACKAGE_DATA = {"orangecontrib.shadow.lnls.widgets.sources":["icons/*.png", "icons/*.jpg"],
                 "orangecontrib.shadow.lnls.widgets.optical_elements":["icons/*.png", "icons/*.jpg"],
                 "orangecontrib.shadow.lnls.widgets.utility":["icons/*.png", "icons/*.jpg"],
+                "orangecontrib.shadow.lnls.data":["data/*.*"],
 }
 
 NAMESPACE_PACAKGES = ["orangecontrib","orangecontrib.shadow", "orangecontrib.shadow.lnls", "orangecontrib.shadow.lnls.widgets"]

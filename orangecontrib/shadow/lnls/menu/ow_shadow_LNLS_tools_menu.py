@@ -1,7 +1,9 @@
 __author__ = 'labx'
 
 from PyQt5 import QtWidgets
+from orangecanvas.scheme.link import SchemeLink
 from oasys.menus.menu import OMenu
+
 
 class ShadowLNLSToolsMenu(OMenu):
 
@@ -25,7 +27,29 @@ class ShadowLNLSToolsMenu(OMenu):
 
     def executeAction_1(self, action):
         try:
-            self.showWarningMessage("Submenu 1.1")
+            widget_desc_1 = self.getWidgetDesc("orangecontrib.shadow.widgets.sources.ow_geometrical_source.GeometricalSource")
+            widget_desc_2 = self.getWidgetDesc("orangecontrib.shadow.lnls.widgets.optical_elements.ow_test_widget.TestWidget")
+            widget_desc_3 = self.getWidgetDesc("orangecontrib.shadow.widgets.optical_elements.ow_plane_mirror.PlaneMirror")
+
+            nodes = []
+            messages = []
+
+            widget_1, node_1, messages_1 = self.createNewNodeAndWidget(widget_desc_1)
+            widget_2, node_2, messages_2 = self.createNewNodeAndWidget(widget_desc_2)
+            widget_3, node_3, messages_3 = self.createNewNodeAndWidget(widget_desc_3)
+
+            widget_1.single_line_value = 20000.0
+
+            widget_2.test_value = 34567.0
+
+            widget_3.source_plane_distance = 1000.0
+            widget_3.image_plane_distance = 3000.0
+
+            nodes.append(node_1)
+            nodes.append(node_2)
+            nodes.append(node_3)
+
+            self.createLinks(nodes)
 
         except Exception as exception:
             self.showCriticalMessage(exception.args[0])
@@ -97,3 +121,39 @@ class ShadowLNLSToolsMenu(OMenu):
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msgBox.exec_()
 
+    #################################################################
+    #
+    # SCHEME MANAGEMENT
+    #
+    #################################################################
+
+    def getWidgetFromNode(self, node):
+        return self.canvas_main_window.current_document().scheme().widget_for_node(node)
+
+    def createLinks(self, nodes):
+        previous_node = None
+        for node in nodes:
+            if not (isinstance(node, str)) and not previous_node is None and not (isinstance(previous_node, str)):
+                link = SchemeLink(source_node=previous_node, source_channel="Beam", sink_node=node, sink_channel="Input Beam")
+                self.canvas_main_window.current_document().addLink(link=link)
+            previous_node = node
+
+    def getWidgetDesc(self, widget_name):
+        return self.canvas_main_window.widget_registry.widget(widget_name)
+
+    def createNewNode(self, widget_desc):
+        return self.canvas_main_window.current_document().createNewNode(widget_desc)
+
+    def createNewNodeAndWidget(self, widget_desc):
+        messages = []
+
+        try:
+            node = self.createNewNode(widget_desc)
+            widget = self.getWidgetFromNode(node)
+
+            # here you can put values on the attrubutes
+
+        except Exception as exception:
+            messages.append(exception.args[0])
+
+        return widget, node, messages

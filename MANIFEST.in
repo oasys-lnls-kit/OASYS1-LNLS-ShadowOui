@@ -1,6 +1,8 @@
 recursive-include orangecontrib *.pyx
 recursive-include orangecontrib *.py
 
+recursive-include orangecontrib/shadow/lnls/data *
+
 recursive-include orangecontrib/shadow/lnls/widgets *.png *.svg *.ico *.jpg *.bmp
 
 include README.txt
