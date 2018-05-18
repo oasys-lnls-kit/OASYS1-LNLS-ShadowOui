@@ -10,4 +10,4 @@ BACKGROUND = "#3074BB"
 
 ICON = "icons/source.png"
 
-PRIORITY = 301
+PRIORITY = 501
