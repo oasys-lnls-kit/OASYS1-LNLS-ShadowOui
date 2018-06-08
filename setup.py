@@ -78,7 +78,7 @@ ENTRY_POINTS = {
         "Shadow LNLS Optical Elements = orangecontrib.shadow.lnls.widgets.optical_elements",
         "Shadow LNLS Utility = orangecontrib.shadow.lnls.widgets.utility",
     ),
-    'oasys.menus' : ("shadowlnlsmenu = orangecontrib.shadow.lnls.menu",)
+    #'oasys.menus' : ("shadowlnlsmenu = orangecontrib.shadow.lnls.menu",)
 }
 
 if __name__ == '__main__':
