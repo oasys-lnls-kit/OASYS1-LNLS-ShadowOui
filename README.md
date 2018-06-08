@@ -16,11 +16,13 @@ The Wiggler spectrum is also calculated analytically as in [X-ray Data Booklet](
 
 #### Undulator
 
-The Undulator (linear or elliptical) source spectrum is calculated numerically using [SRW](https://github.com/ochubar/SRW) (Synchrotron Radiation Workshop) code (see ref. [2]), taking into account the energy spread and finite emmitance of the electron beam.
+The Undulator (linear or elliptical) source spectrum is calculated numerically using [SRW](https://github.com/ochubar/SRW) (Synchrotron Radiation Workshop) code (see ref. [2]), taking into account the energy spread and finite emittance of the electron beam.
 
 ## Examples 
 
 ## Method Details
+
+![method](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/flux_method.png "Flux Method")
 
 ## References
 
