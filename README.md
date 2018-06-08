@@ -18,19 +18,23 @@ The Wiggler spectrum is also calculated analytically as in X-ray Data Booklet [a
 
 The Undulator (linear or elliptical) source spectrum is calculated numerically using SRW (Synchrotron Radiation Workshop) code [reference], taking into account the energy spread and finite emmitance of the electron beam.
 
-        ** caution **
+
 
 ## Examples 
 
 ## Method Details
 
-The total flux $F$ a at particular position in the beamline can be expressed as:
+The total flux **F** a at particular position in the beamline can be expressed as:
 
-$$F = \int_{E_i}^{E_f} F(E) \ dE $$
+[equation](latex.codecogs.com/gif.download?%24%24F%20%3D%20%5Cint_%7BE_i%7D%5E%7BE_f%7D%20F%28E%29%20%5C%20dE%20%24%24)
 
-where  $F(E)$ is the spectral flux at that postion, which in turns is related to the source spectral flux $F_s(E)$ and the beamline energy-dependent transmission $T(E)$ as: 
+[equation](latex.codecogs.com/gif.latex?%24%24F%20%3D%20%5Cint_%7BE_i%7D%5E%7BE_f%7D%20F%28E%29%20%5C%20dE%20%24%24)
+
+where  **F(E)** is the spectral flux at that postion, which in turns is related to the source spectral flux **Fs(E)** and the beamline energy-dependent transmission **T(E)** as: 
 
 $$F(E) = F_s(E) \ T(E)$$
+
+[equation](latex.codecogs.com/gif.download?%24%24F%28E%29%20%3D%20F_s%28E%29%20%5C%20T%28E%29%24%24)
 
 For the power calculation, it can be noted that a bunch of $N$ photons with equal energy $E_i$ comprises a total energy $N * E_i$, and in a time interval the number of photons is $N = F(E) \Delta t$, the power within an infinitesimal bandwidth is $dP = F(E)\ E \ dE$, so the integrated power is:
 $$P = \int_{E_i}^{E_f} F(E)\ E \ dE $$
