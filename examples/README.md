@@ -4,7 +4,7 @@ In this folder you find a few examples of our widgets functionalities and limita
 ## Flux Widget
 
 ### Example A: Flux of an undulator beam after a Double-Crystal Monochromator (DCM) 
-In this example, a highly collimated undulator beam, modeled by a geometric source, passes through a Si(111) DCM, and the flux and power are computed using the Flux Widget. The flux is checked against SPECTRA code [refs] and the simple rule suggested by M. S. del Rio [refs]. 
+In this example, a highly collimated undulator beam, modeled by a geometric source, passes through a Si(111) DCM, and the flux and power are computed using the Flux Widget. The flux is checked against [SPECTRA code](http://spectrax.org/spectra/index.html) [1] and the simple rule suggested by M. S. del Rio [2]. 
 
 ![widgetsA](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleA_widgets.png "widgetsA")
 
@@ -22,7 +22,7 @@ As one can see, the total flux is calculated to be 3.86e+12 ph/s/100mA. To doubl
 
 The Output Tab shows a comprehensive summary of the parameters used, for debbuging (figure below). It is important to check if the source acceptance limits used match the source widget divergence distribution. The horizontal (H) and vertical (V) `threshold` parameters can be used to adjust the acceptance limits, if needed.
 
-![outputA](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleA_flux.png "outputA")
+![outputA](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleA_output.png "outputA")
 
 
 ### Example B: Flux of a Bending Magnet source after a multilayer mirror
@@ -32,8 +32,10 @@ In this example, we show how to calculate total flux and power contained in a br
 - `e-beam Divergence RMS V`: This is an optional parameter. If the value is 0 (zero), it will be ignored. If it is larger than 0, the electron beam divergence sigma (RMS) in the vertical direction will be convolved with the radiation angular probability density function to include the finite emittance. Note that the approximation that the radiation contribution is much large than the electron beam divergence is very good for most cases.
 
 
+## References 
 
-
+[1] [T. Tanaka and H. Kitamura, Journal of Synchrotron Radiation 8, 1221 (2001)](https://doi.org/10.1107/S090904950101425X)
+[2] [Manuel Sanchez del Rio, Olivier Mathon, Proc. SPIE 5536, (2004)](https://doi.org/10.1117/12.559326)
 
 
 

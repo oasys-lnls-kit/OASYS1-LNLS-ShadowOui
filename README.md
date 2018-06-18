@@ -29,7 +29,7 @@ To degub the results, all the intermediate steps of the calculation are shown in
 
 ## References
 
-[1] O. Chubar and P. Elleaume, Proc. EPAC-98, 1177 - 1179 (1998).
+[1] [O. Chubar and P. Elleaume, Proc. EPAC-98, 1177 - 1179 (1998)](https://accelconf.web.cern.ch/AccelConf/e98/PAPERS/THP01G.PDF).
 
 ## Authors
 
