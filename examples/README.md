@@ -35,9 +35,13 @@ The bending magnet parameters are the ESRF standard ones, and the first hamonic 
  
 ![widgetsB](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleB_widgets.png "widgetsB")
 
-In this example we have two branches in the workspace. In branch A, the source is optimized to the plane mirror vertical acceptance, which is 30 microradians. In branch B, the divergence is not limited, so there a rays with angles larger than the mirror acceptance, which decreases the overall beamline transmittance. In this case, the acceptance is limited by a slit. This examples shows that both simulations give the same result, despite the branch A configuration needs much less rays in the source and yields better statistics at the end. Note that the calculated spectrum and beamline transmittance are different for the two configurations (figure below).
+In this example we have two branches in the workspace. In branch A, the source is optimized to the plane mirror vertical acceptance, which is 30 microradians. In branch B, the divergence is not limited, so there a rays with angles larger than the mirror acceptance, which decreases the overall beamline transmittance. In this case, the acceptance is limited by a slit. 
+
+This examples shows that both simulations give the same result, despite the branch A configuration needs much less rays in the source and yields better statistics at the end. Note that the calculated source spectrum and beamline transmittance are different for the two configurations, but the beamline spectrum is the same (figure below).
 
 ![compB](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleB_comparison.png "comparisonB")
+
+In the vertical acceptance figure, the gray solid line represents the acceptance limits of the source (which can be defined by the user), and the black solid line represents the distribution Full Width at Half Maximum (FWHM).
 
 ## References 
 
