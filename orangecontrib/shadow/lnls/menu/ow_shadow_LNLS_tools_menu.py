@@ -1,6 +1,7 @@
 __author__ = 'labx'
 
 from PyQt5 import QtWidgets
+from PyQt5.QtGui import QPixmap
 from orangecanvas.scheme.link import SchemeLink
 from oasys.menus.menu import OMenu
 
@@ -11,84 +12,19 @@ class ShadowLNLSToolsMenu(OMenu):
         super().__init__(name="Shadow LNLS Tools")
 
         self.openContainer()
-        self.addContainer("Container 1")
-        self.addSubMenu("Submenu 1.1")
-        self.addSubMenu("Submenu 1.2")
-        self.closeContainer()
-        self.openContainer()
-        self.addContainer("Container 2")
-        self.addSubMenu("Submenu 2.1")
-        self.addSubMenu("Submenu 2.2")
-        self.addSeparator()
-        self.addSubMenu("Submenu 2.3")
-        self.closeContainer()
-        self.addSeparator()
-        self.addSubMenu("Submenu 3")
+        self.addContainer("LNLS Help")
+        self.addSubMenu("Help")        
+        self.closeContainer()        
+        
 
     def executeAction_1(self, action):
         try:
-            widget_desc_1 = self.getWidgetDesc("orangecontrib.shadow.widgets.sources.ow_geometrical_source.GeometricalSource")
-            widget_desc_2 = self.getWidgetDesc("orangecontrib.shadow.lnls.widgets.optical_elements.ow_test_widget.TestWidget")
-            widget_desc_3 = self.getWidgetDesc("orangecontrib.shadow.widgets.optical_elements.ow_plane_mirror.PlaneMirror")
-
-            nodes = []
-            messages = []
-
-            widget_1, node_1, messages_1 = self.createNewNodeAndWidget(widget_desc_1)
-            widget_2, node_2, messages_2 = self.createNewNodeAndWidget(widget_desc_2)
-            widget_3, node_3, messages_3 = self.createNewNodeAndWidget(widget_desc_3)
-
-            widget_1.single_line_value = 20000.0
-
-            widget_2.test_value = 34567.0
-
-            widget_3.source_plane_distance = 1000.0
-            widget_3.image_plane_distance = 3000.0
-
-            nodes.append(node_1)
-            nodes.append(node_2)
-            nodes.append(node_3)
-
-            self.createLinks(nodes)
+           self.showHelpMessage("Shadow LNLS Tools Help")
 
         except Exception as exception:
             self.showCriticalMessage(exception.args[0])
 
-    def executeAction_2(self, action):
-        try:
-            self.showWarningMessage("Submenu 1.2")
-
-        except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
-
-    #ENABLE PLOTS
-    def executeAction_3(self, action):
-        try:
-            self.showWarningMessage("Submenu 2.1")
-
-        except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
-
-    def executeAction_4(self, action):
-        try:
-            self.showWarningMessage("Submenu 2.2")
-
-        except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
-
-    def executeAction_5(self, action):
-        try:
-            self.showWarningMessage("Submenu 2.3")
-
-        except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
-
-    def executeAction_6(self, action):
-        try:
-            self.showWarningMessage("Submenu 3")
-
-        except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
+  
 
 
     ###############################################################
@@ -106,7 +42,14 @@ class ShadowLNLSToolsMenu(OMenu):
         msgBox.setDefaultButton(QtWidgets.QMessageBox.No)
 
         return msgBox.exec_()
-
+    
+    def showHelpMessage(self,title):
+        msgBox = QtWidgets.QMessageBox()                
+        msgBox.setText("For widgget theory and examples, access:")
+        msgBox.setInformativeText("<a href='https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui'>OASYS1-LNLS-ShadowOui/</a> \n")        
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)         
+        msgBox.exec()
+        
     def showWarningMessage(self, message):
         msgBox = QtWidgets.QMessageBox()
         msgBox.setIcon(QtWidgets.QMessageBox.Warning)
