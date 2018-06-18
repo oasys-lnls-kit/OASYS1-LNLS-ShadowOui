@@ -6,11 +6,24 @@ In this folder you find a few examples of our widgets functionalities and limita
 ### Example A: Flux of an undulator beam after a Double-Crystal Monochromator (DCM) 
 In this example, a highly collimated undulator beam, modeled by a geometric source, passes through a Si(111) DCM, and the flux and power are computed using the Flux Widget. The flux is checked against SPECTRA code [refs] and the simple rule suggested by M. S. del Rio [refs]. 
 
+![widgetsA](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleA_widgets.png "widgetsA")
+
 For undulators, the user need to pass both the machine (energy and beam dimensions) and undulator parameters. While some of the parameters are intuitive, the following parameters are explained below:
 
 - `Harmonic Number (n)`: This parameters is to be used together with `Target Energy (En)`, which will calculate the K-value automatically. 
 - `Maximum Harmonic to include`: SRW will compute only the undulator harmonics within this value. Thus, this parameter must be always larger than the harmonic number you will use in the simulation.
 - `Precision`: Precision for longitudinal/azimuthal integration in SRW. Please refer to SRW documentation.
+
+The undulator is set to use the 7th harmonic at 10 keV, and the source parameters are as in the figure below:
+
+![fluxA](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleA_flux.png "fluxA")
+
+As one can see, the total flux is calculated to be 3.86e+12 ph/s/100mA. To double-check the results, we use SPECTRA to calculate the flux at 10 keV, which yields 3.26e+13 ph/s/0.1%bw/100mA (very close to SRW calculation, shown in the Source Spectrum Tab). We can multiply this value to the simple factor 0.135 to account for the Si(111) DCM bandwidth, which gives 4.4e*12 ph/s/100mA, which is in reasonable agreement with the Flux Widget calculation. It is important to notice that the factor used is a (relatively good) approximation, and in this simulation, the beam is not perfectly collimated, so small deviations are expected. 
+
+The Output Tab shows a comprehensive summary of the parameters used, for debbuging (figure below). It is important to check if the source acceptance limits used match the source widget divergence distribution. The horizontal (H) and vertical (V) `threshold` parameters can be used to adjust the acceptance limits, if needed.
+
+![outputA](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleA_flux.png "outputA")
+
 
 ### Example B: Flux of a Bending Magnet source after a multilayer mirror
 In this example, we show how to calculate total flux and power contained in a broad band such as after a multilayer mirror. Also, the mirror acceptance is only 30 urad, so that the usage of the vertical partial acceptance (of divergence) can drastically reduce the number of rays needed. 
