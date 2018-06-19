@@ -1,5 +1,5 @@
 # Examples of OASYS1-LNLS-ShadowOui Widgets
-In this folder you find a few examples of our widgets functionalities and limitations. 
+In this folder you find a few examples of our widgets functionalities and limitations. Please remember to change the working directory and running preprocessors before running source/trace.
 
 ## Flux Widget
 
