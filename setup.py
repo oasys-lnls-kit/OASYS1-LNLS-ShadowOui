@@ -7,14 +7,14 @@ import subprocess
 
 NAME = 'OASYS1-LNLS-ShadowOui'
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 ISRELEASED = False
 
 DESCRIPTION = 'WIDGETS DEVELOPED FOR LNLS TO EXTEND SHADOWOUI FUNCTIONALITIES'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.txt')
 LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Bernd Christian Meyer, Sergio Augusto Lordano Luiz and Luca Rebuffi'
-AUTHOR_EMAIL = 'bernd.meyer@lnls.br'
+AUTHOR = 'Bernd Christian Meyer, Sergio Augusto Lordano Luiz, Artur Clarindo Pinto and Luca Rebuffi'
+AUTHOR_EMAIL = 'artur.pinto@lnls.br'
 URL = 'http://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui'
 DOWNLOAD_URL = 'http://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui'
 LICENSE = 'MIT'
@@ -63,9 +63,7 @@ PACKAGES = find_packages(
                          exclude = ('*.tests', '*.tests.*', 'tests.*', 'tests'),
                          )
 
-PACKAGE_DATA = {"orangecontrib.shadow.lnls.widgets.sources":["icons/*.png", "icons/*.jpg"],
-                "orangecontrib.shadow.lnls.widgets.optical_elements":["icons/*.png", "icons/*.jpg"],
-                "orangecontrib.shadow.lnls.widgets.utility":["icons/*.png", "icons/*.jpg"],
+PACKAGE_DATA = {"orangecontrib.shadow.lnls.widgets.utility":["icons/*.png", "icons/*.jpg"],
                 "orangecontrib.shadow.lnls.data":["data/*.*"],
 }
 
@@ -73,9 +71,7 @@ NAMESPACE_PACAKGES = ["orangecontrib","orangecontrib.shadow", "orangecontrib.sha
 
 ENTRY_POINTS = {
     'oasys.addons' : ("LNLS ShadowOui = orangecontrib.shadow.lnls", ),
-    'oasys.widgets' : (
-        "Shadow LNLS Sources = orangecontrib.shadow.lnls.widgets.sources",
-        "Shadow LNLS Optical Elements = orangecontrib.shadow.lnls.widgets.optical_elements",
+    'oasys.widgets' : (      
         "Shadow LNLS Utility = orangecontrib.shadow.lnls.widgets.utility",
     ),
     'oasys.menus' : ("shadowlnlsmenu = orangecontrib.shadow.lnls.menu",)

@@ -83,12 +83,11 @@ class FluxWidget(LNLSShadowWidget):
     sigma_x=Setting(19.1e-3)
     sigma_z=Setting(2.0e-3)
     div_x=Setting(13.0e-6)
-    div_z=Setting(1.3e-6) 
-    c_acc=Setting(1)
-    lim_i_x=Setting(5e-4)
-    lim_f_x=Setting(5e-4)
-    lim_i_z=Setting(5e-4)
-    lim_f_z=Setting(5e-4)
+    div_z=Setting(1.3e-6)     
+    lim_i_x=Setting(0)
+    lim_f_x=Setting(0)
+    lim_i_z=Setting(0)
+    lim_f_z=Setting(0)
       
     number_of_bins=Setting(101)     
              
@@ -99,6 +98,7 @@ class FluxWidget(LNLSShadowWidget):
     flux_total=Setting(0)
     power_total=Setting(0)
     keep_result=Setting(0)
+    output_filename=Setting("output.dat")
    
     def __init__(self):
         super().__init__()
@@ -210,12 +210,10 @@ class FluxWidget(LNLSShadowWidget):
         self.set_Source()
         
         ### Calculation Settings tab (tab_config) ###  
-        config_box = oasysgui.widgetBox(tab_config, "Define Flux Calculation Settings", addSpace=True, orientation="vertical", height=600)
+        config_box = oasysgui.widgetBox(tab_config, "Define Flux Calculation Settings", addSpace=True, orientation="vertical", height=200)
         
         self.nb = oasysgui.lineEdit(config_box, self, "number_of_bins", "Number of Bins", 
-                          labelWidth=220, valueType=int, controlWidth=100, orientation="horizontal") 
-        
-        self.check_acc = gui.checkBox(config_box,self,"c_acc","Calculate Acceptance from Source",callback=self.calc_acc)
+                          labelWidth=220, valueType=int, controlWidth=100, orientation="horizontal")        
         
         self.mxa = oasysgui.lineEdit(config_box, self, "lim_i_x", "Source Acceptance -X [rad] ", 
                           labelWidth=220, valueType=float, controlWidth=100, orientation="horizontal") 
@@ -228,6 +226,12 @@ class FluxWidget(LNLSShadowWidget):
         
         self.pxz = oasysgui.lineEdit(config_box, self, "lim_f_z", "Source Acceptance +Z [rad] ", 
                           labelWidth=220, valueType=float, controlWidth=100, orientation="horizontal")
+        
+        print_box = oasysgui.widgetBox(tab_config, "Download Data", addSpace=True, orientation="vertical", height=150)
+        self.select_file_box = oasysgui.widgetBox(print_box, "", addSpace=True, orientation="horizontal")
+        self.le_file_name = oasysgui.lineEdit(self.select_file_box, self, "output_filename", "Output File Name",
+                                                        labelWidth=120, valueType=str, orientation="horizontal")
+        gui.button(print_box, self, "Generate Output", callback=self.down_data, height=35,width=200)
 
     
        
@@ -372,11 +376,7 @@ class FluxWidget(LNLSShadowWidget):
 #################################################################################
         
     
-    ### Show or hide source 
-        ## Bending Magnet: source_type == 0
-        ## Wiggler: source_type == 1
-        ## Linear Undulator == 2
-    
+    ### Show or hide source     
     def set_Source(self):
         self.kind_of_source_box_1.setVisible(self.source_type<=2)
         self.kind_of_source_box_1_1.setVisible(self.source_type<2)
@@ -400,15 +400,8 @@ class FluxWidget(LNLSShadowWidget):
         
     ### Calculates undulator central Energy from a given K-Value
     def K_En_und(self):        
-        self.c_En = round(9.4963425587*self.und_n*self.storage_energy**2/((1+self.k_value**2/2.0)*self.und_period),6)   
-    
-    ### 
-    def calc_acc(self):
-        if self.c_acc == 1:            
-            
-            self.lim_i_x, self.lim_f_x = numpy.abs(self.get_div_limits(X_or_Z='X', nbins=self.number_of_bins, threshold=1.0, debug=False)[0:2])
-            self.lim_i_z, self.lim_f_z = numpy.abs(self.get_div_limits(X_or_Z='Z', nbins=self.number_of_bins, threshold=1.0, debug=False)[0:2])                 
-        
+        self.c_En = round(9.4963425587*self.und_n*self.storage_energy**2/((1+self.k_value**2/2.0)*self.und_period),6)      
+   
     
     ### Colect input beam ###
     def set_beam(self, beam):
@@ -454,43 +447,22 @@ class FluxWidget(LNLSShadowWidget):
 
 
     def plot_xy(self):
-        beam_to_plot = self.input_beam._beam
-
-        try:
-            open('begin.dat')
-        except:
-            QtWidgets.QMessageBox.critical(self, "Error",
-                                       "Enable output file Begin.dat on source!",
-                                       QtWidgets.QMessageBox.Ok)
-
+        beam_to_plot = self.input_beam._beam       
 
        #Intesity Spectrum at Sample
         En = beam_to_plot.getshonecol(11, nolost=1)
         I = beam_to_plot.getshonecol(23, nolost=1)
         histoI = numpy.histogram(En, self.number_of_bins, weights=I)[0]
-        En_coord = numpy.linspace(numpy.min(En), numpy.max(En),self.number_of_bins)
+        self.En_coord = numpy.linspace(numpy.min(En), numpy.max(En),self.number_of_bins)
         
        #Collect intensity from Shadow Source
-        En0 = st.getshonecol('begin.dat',11)
-        I0 = st.getshonecol('begin.dat',23)
+        En0 = beam_to_plot.getshonecol(11, nolost=0)
+        I0 = numpy.ones(len(En0))
         
        #Creates source histogram from sample energy range
         I0_new = I0[numpy.logical_and(En0>=numpy.min(En),En0<=numpy.max(En))]
         En0_new = En0[numpy.logical_and(En0>=numpy.min(En),En0<=numpy.max(En))]
-        histoI0 = numpy.histogram(En0_new, self.number_of_bins , weights=I0_new)[0]
-        
-       #Warning to prevent misscalculation from source                   
-        if numpy.max(histoI/histoI0)>1.0:
-            QtWidgets.QMessageBox.warning(self, "WARNING!",
-                                       "Beamline transmittance is greater than one!"+"\n"+
-                                       "Run the source again and enable output file Begin.dat",
-                                       QtWidgets.QMessageBox.Ok)
-            
-        elif round(numpy.min(En),1) < round(numpy.min(En0),1) or round(numpy.max(En),1) > round(numpy.max(En0),1) :
-           QtWidgets.QMessageBox.warning(self, "WARNING!",
-                                       "Source and sample with different energy ranges!"+"\n"+
-                                       "Run the source again and enable output file Begin.dat",
-                                       QtWidgets.QMessageBox.Ok)
+        histoI0 = numpy.histogram(En0_new, self.number_of_bins , weights=I0_new)[0] 
 
        #Collect beam info       
         info_beam = beam_to_plot.histo1(1)
@@ -502,28 +474,31 @@ class FluxWidget(LNLSShadowWidget):
         self.current = 0.1 #always normalized to 100 mA
         
         ##### Get source acceptance #####  
+        if (self.lim_i_x == 0) or (self.lim_i_z == 0):
+            
+            QtWidgets.QMessageBox.critical(self, "Error",
+                                           "Set Source Acceptance in the Calculation Settings tab!!",
+                                           QtWidgets.QMessageBox.Ok)
         
-        if self.c_acc == 1:
-            self.calc_acc()
-       
+        self.checkFields()
         self.hor_accep = (self.lim_f_x + self.lim_i_x)*1e3
         self.ver_accep = (self.lim_f_z + self.lim_i_z)*1e3
         
         sp = '            ' # spacing for identation 
-        self.print_date()
+        self.print_date_i()
         print( sp + 'Source parameters:')
         
        #Select source type and calculate spectrum
         if self.source_type == 0:
   
-           source_spec = self.BM_spectrum(E=self.storage_energy,I=self.current,B=self.mag_field,ph_energy=En_coord,hor_acc_mrad=self.hor_accep)
+           self.source_spec = self.BM_spectrum(E=self.storage_energy,I=self.current,B=self.mag_field,ph_energy=self.En_coord,hor_acc_mrad=self.hor_accep)
            print(sp+sp+'E = {0} GeV'.format(self.storage_energy) + '\n' + sp+sp+'I = {0} A'.format(self.current) + '\n' + sp+sp+'B = {0} T'.format(self.mag_field) + '\n' )
            
            
         if self.source_type == 1:
 
            self.n_periods = self.n_periods
-           source_spec = self.Wiggler_spectrum(self.storage_energy,self.current,self.mag_field,self.n_periods,En_coord,self.hor_accep)
+           self.source_spec = self.Wiggler_spectrum(self.storage_energy,self.current,self.mag_field,self.n_periods,self.En_coord,self.hor_accep)
            print(sp+sp+'E = {0} GeV'.format(self.storage_energy) + '\n' + sp+sp+'I = {0} A'.format(self.current) + '\n' + sp+sp+'B = {0} T'.format(self.mag_field) + '\n' + sp+sp+'N periods = {0} '.format(self.n_periods) + '\n' )
 
         if self.source_type == 2:
@@ -533,7 +508,7 @@ class FluxWidget(LNLSShadowWidget):
             electron_beam=[self.sigma_x*1e-3, self.sigma_z*1e-3, self.div_x, self.div_z, self.storage_energy, self.en_spread, self.current]
             sampling_mesh=[10.0, round(-self.lim_i_x*10.0, 8), round(self.lim_f_x*10.0, 8), round(-self.lim_i_z*10.0, 8), round(self.lim_f_z*10.0, 8)]    
             precision = [self.max_h, self.prec, self.prec]
-            energy_grid=[En_coord[0],En_coord[-1], self.number_of_bins]            
+            energy_grid=[self.En_coord[0],self.En_coord[-1], self.number_of_bins]            
 
             print(sp+sp+"Parameters passed to SRWLMagFldH():")
             print(sp+sp+sp+"_n=1, _h_or_v='v', _B={0}, _ph={1}, _s={2}, _a=1".format(mag_field[3], mag_field[5], mag_field[7]))
@@ -554,7 +529,7 @@ class FluxWidget(LNLSShadowWidget):
             print(sp+sp+sp, sampling_mesh, '\n')
            
             os.write(1, b'########### Running SRW Undulator Spectrum! ############### \n')
-            source_spec = self.srw_undulator_spectrum(mag_field, electron_beam, energy_grid, sampling_mesh, precision)
+            self.source_spec = self.srw_undulator_spectrum(mag_field, electron_beam, energy_grid, sampling_mesh, precision)
             os.write(1, b'########### Source Spectrum Done! ############### \n')
         
         
@@ -566,22 +541,22 @@ class FluxWidget(LNLSShadowWidget):
            
         
         # Calculates Vertical acceptance for Bending Magnet and Wiggler sources
-        vert_acc = numpy.ones((len(En_coord)))
+        self.vert_acc = numpy.ones((len(self.En_coord)))
         if(self.source_type<2 and self.use_vert_acc==1):
             
-            self.acc_dict = self.BM_vertical_acc(E=self.storage_energy, B=self.mag_field, ph_energy=En_coord, 
+            self.acc_dict = self.BM_vertical_acc(E=self.storage_energy, B=self.mag_field, ph_energy=self.En_coord, 
                                                  div_limits=[-self.lim_i_z, self.lim_f_z], e_beam_vert_div=self.ebeam_vert_sigma)
-            vert_acc = self.acc_dict['acceptance']
+            self.vert_acc = self.acc_dict['acceptance']
 
         
         #Flux Spectrum at Sample
-        T1 = histoI/histoI0
-        Flux_eV = source_spec*(1000.0/En_coord)
-        Flux_sample = Flux_eV*T1*vert_acc
-        Power_sample = Flux_eV*T1*vert_acc*En_coord*1.60217662e-19
+        self.T1 = histoI/histoI0
+        Flux_eV = self.source_spec*(1000.0/self.En_coord)
+        Flux_sample = Flux_eV*self.T1*self.vert_acc
+        Power_sample = Flux_eV*self.T1*self.vert_acc*self.En_coord*1.60217662e-19
  
-        self.Flux = (simps(Flux_sample,x=En_coord)*(0.1/self.current))    #Integrate the Flux and normalize to 100 mA
-        self.Power = (simps(Power_sample,x=En_coord)*(0.1/self.current))
+        self.Flux = (simps(Flux_sample,x=self.En_coord)*(0.1/self.current))    #Integrate the Flux and normalize to 100 mA
+        self.Power = (simps(Power_sample,x=self.En_coord)*(0.1/self.current))
         
         self.flux_total = ("{:.2e}".format(self.Flux))
         self.power_total = ("{:.3f}".format(self.Power))
@@ -596,7 +571,7 @@ class FluxWidget(LNLSShadowWidget):
         self.plot_canvas.setGraphYLabel("Flux [ph/s/100mA/0.1%bW]")
         self.plot_canvas.setGraphXLabel("Energy [eV]")        
         self.plot_canvas.setGraphTitle('Beamline Spectrum')
-        self.plot_canvas.addCurve(En_coord,source_spec*T1*vert_acc,color='blue',symbol='.',linewidth=2)
+        self.plot_canvas.addCurve(self.En_coord,self.source_spec*self.T1*self.vert_acc,color='blue',symbol='.',linewidth=2)
         self.image_box.layout().addWidget(self.plot_canvas)
 
 #        
@@ -605,7 +580,7 @@ class FluxWidget(LNLSShadowWidget):
         self.plot_canvas2.setGraphYLabel("Flux [ph/s/100mA/0.1%bW]")
         self.plot_canvas2.setGraphXLabel("Energy [eV]")
         self.plot_canvas2.setGraphTitle('Source Spectrum')        
-        self.plot_canvas2.addCurve(En_coord,source_spec*vert_acc,color='blue',symbol='.',linewidth=2)
+        self.plot_canvas2.addCurve(self.En_coord,self.source_spec*self.vert_acc,color='blue',symbol='.',linewidth=2)
         self.image_box2.layout().addWidget(self.plot_canvas2)
         
 #        
@@ -614,7 +589,7 @@ class FluxWidget(LNLSShadowWidget):
         self.plot_canvas3.setGraphYLabel("Transmission")
         self.plot_canvas3.setGraphXLabel("Energy [eV]")       
         self.plot_canvas3.setGraphTitle('Beamline Transmission')
-        self.plot_canvas3.addCurve(En_coord,T1,color='blue',symbol='.',linewidth=2)
+        self.plot_canvas3.addCurve(self.En_coord,self.T1,color='blue',symbol='.',linewidth=2)
         self.image_box3.layout().addWidget(self.plot_canvas3)
 
 #
@@ -623,21 +598,21 @@ class FluxWidget(LNLSShadowWidget):
         self.plot_canvas4.setGraphYLabel("Intensity")
         self.plot_canvas4.setGraphXLabel("Energy [eV]")     
         self.plot_canvas4.setGraphTitle('Intensity Histograms')
-        self.plot_canvas4.addCurve(En_coord,histoI0,legend='Source',color='green')                   
-        self.plot_canvas4.addCurve(En_coord,histoI,legend='Element',color='red')
+        self.plot_canvas4.addCurve(self.En_coord,histoI0,legend='Source',color='green')                   
+        self.plot_canvas4.addCurve(self.En_coord,histoI,legend='Element',color='red')
         self.image_box4.layout().addWidget(self.plot_canvas4)
         
         #Plot Acceptance
         if(self.source_type<2 and self.use_vert_acc==1):
             self.plot_canvas5.clear()            
-            self.plot_canvas5.addImage(self.acc_dict["PDF"].transpose(),origin=(numpy.min(En_coord),1e3*numpy.min(self.acc_dict["Psi"])),
-                                       scale=((numpy.max(En_coord)-numpy.min(En_coord))/self.number_of_bins,
+            self.plot_canvas5.addImage(self.acc_dict["PDF"].transpose(),origin=(numpy.min(self.En_coord),1e3*numpy.min(self.acc_dict["Psi"])),
+                                       scale=((numpy.max(self.En_coord)-numpy.min(self.En_coord))/self.number_of_bins,
                                               1e3*(numpy.max(self.acc_dict["Psi"])-numpy.min(self.acc_dict["Psi"]))/len(self.acc_dict["PDF"][0,:])))
-            self.plot_canvas5.addCurve(En_coord,1e3*self.acc_dict["rwhm"],color='black',linewidht=1.5,legend='right')
-            self.plot_canvas5.addCurve(En_coord,1e3*self.acc_dict["lwhm"],color='black',linewidth=1.5,legend='left')
-            self.plot_canvas5.addCurve([numpy.min(En_coord),numpy.max(En_coord)],
+            self.plot_canvas5.addCurve(self.En_coord,1e3*self.acc_dict["rwhm"],color='black',linewidht=1.5,legend='right')
+            self.plot_canvas5.addCurve(self.En_coord,1e3*self.acc_dict["lwhm"],color='black',linewidth=1.5,legend='left')
+            self.plot_canvas5.addCurve([numpy.min(self.En_coord),numpy.max(self.En_coord)],
                                        [-self.lim_i_z*1e3,-self.lim_i_z*1e3],color='gray',linewidth=1.5,legend='i_z')
-            self.plot_canvas5.addCurve([numpy.min(En_coord),numpy.max(En_coord)],
+            self.plot_canvas5.addCurve([numpy.min(self.En_coord),numpy.max(self.En_coord)],
                                        [self.lim_f_z*1e3,self.lim_f_z*1e3],color='gray',linewidth=1.5,legend='f_z')
             
             pos = [0.12, 0.2, 0.82, 0.70]
@@ -652,7 +627,7 @@ class FluxWidget(LNLSShadowWidget):
             self.plot_canvas5.setGraphYLabel("Vert. div. distribution [mrad]")
         
             self.plot_canvas6.clear()            
-            self.plot_canvas6.addCurve(En_coord,self.acc_dict["acceptance"],color='blue',symbol='.',linewidth=2)    
+            self.plot_canvas6.addCurve(self.En_coord,self.acc_dict["acceptance"],color='blue',symbol='.',linewidth=2)    
             
             self.plot_canvas6._backend.ax.get_yaxis().get_major_formatter().set_useOffset(True)
             self.plot_canvas6._backend.ax.get_yaxis().get_major_formatter().set_scientific(True)
@@ -663,66 +638,8 @@ class FluxWidget(LNLSShadowWidget):
             self.plot_canvas6.setGraphYLabel("Acceptance Factor")    
             self.image_box6.layout().addWidget(self.plot_canvas6)
             
-
-    
-    def get_div_limits(self, X_or_Z='X', nbins=100, threshold=1.0, debug=False):
+        self.print_date_f() 
         
-        filename = 'begin.dat'
-        
-        if(X_or_Z=='X'):            
-            col = 4
-        elif(X_or_Z=='Z'):
-            col = 6
-              
-        
-        Xp_rays = st.getshonecol(filename, col)
-        I_rays = st.getshonecol(filename, 23)
-        Xp = numpy.linspace(numpy.min(Xp_rays), numpy.max(Xp_rays), nbins)
-        histoXp = numpy.histogram(Xp_rays, bins=nbins)[0]
-        intensity = numpy.sum(I_rays)
-        
-        if(threshold == 1.0): # use histogram limits
-            if(debug):
-                os.write(1,b' DEBUGGING DIVERGENCE LIMITS FUNCTION - THRESHOLD = 1 \n')
-            limXp_i = numpy.min(Xp)
-            limXp_f = numpy.max(Xp)
-            integralXp = intensity
-        
-        elif(threshold > 1.0): # increase limits -> threshold becomes the factor
-            if(debug):
-                os.write(1,b' DEBUGGING DIVERGENCE LIMITS FUNCTION - THRESHOLD > 1 \n')
-            limXp_i = numpy.min(Xp)*threshold
-            limXp_f = numpy.max(Xp)*threshold
-            integralXp = intensity
-        
-        else: # strangle limits
-            if(debug):
-                os.write(1,b' DEBUGGING DIVERGENCE LIMITS FUNCTION - THRESHOLD < 1 \n')
-            for i in range(nbins):
-            
-                if(i==0):
-                    integralXp = simps(histoXp)#, x=Xp)
-                    if(debug):
-                        string = 'i={0} and integralXp = {1}, threshold = {2}, intensity = {3}, thre * inten = {4} \n'.format(i, integralXp, threshold, intensity, threshold * intensity)
-                        os.write(1, string.encode('ASCII'))
-                    if(integralXp <= threshold * intensity):
-                        limXp_i = Xp[0]
-                        limXp_f = Xp[-1]
-                        break
-                else:
-                    integralXp = simps(histoXp[i:-1*i])#, x=Xp[i:-1*i])
-                    if(debug):
-                        string = 'i={0} and integralXp = {1}, threshold = {2}, intensity = {3}, thre * inten = {4} \n'.format(i, integralXp, threshold, intensity, threshold * intensity)
-                        os.write(1, string.encode('ASCII'))
-                    if(integralXp <= threshold * intensity):
-                        limXp_i = Xp[i]
-                        limXp_f = Xp[-1*i -1]
-                        break
-        
-        
-        return [round(limXp_i,8), round(limXp_f,8), integralXp, intensity, integralXp/intensity]
-
-
         
     def writeStdOut(self, text):        
         cursor = self.shadow_output.textCursor()
@@ -742,7 +659,11 @@ class FluxWidget(LNLSShadowWidget):
         if self.workspace_units_label == "m":
             self.conv = 1e6
 
-  
+    def checkFields(self):        
+        self.lim_i_x  = congruence.checkPositiveNumber(self.lim_i_x , "Source Acceptance -X [rad]")
+        self.lim_f_x  = congruence.checkPositiveNumber(self.lim_f_x , "Source Acceptance +X [rad]")
+        self.lim_i_z  = congruence.checkPositiveNumber(self.lim_i_z , "Source Acceptance -Z [rad]")
+        self.lim_f_z  = congruence.checkPositiveNumber(self.lim_f_z , "Source Acceptance +Z [rad]")
         
     #########################################################################
     ############ SOURCE SPECTRUM CALCULATION FUNCTIONS ######################
@@ -862,9 +783,18 @@ class FluxWidget(LNLSShadowWidget):
         
         return W_Flux    
     
-    def print_date(self):
+    def print_date_i(self):
         print('\n'+'EXECUTION BEGAN AT: ', end='')
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), '\n')
+    
+    def print_date_f(self):
+        print('\n'+'EXECUTION FINISHED AT: ', end='')
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), '\n')
+        
+    def down_data(self):
+        numpy.savetxt(self.output_filename, 
+                      numpy.array([self.En_coord,self.T1,self.source_spec*self.ver_accep,self.T1*self.source_spec*self.ver_accep]).T, 
+                      header='Energy [eV] \t Transmission \t Source Spectrum [ph/s/100mA/0.1%bW] \t Beamline Spectrum [ph/s/100mA/0.1%bW]')       
     
     def BM_vertical_acc(self, E=3.0, B=3.2, ph_energy=1915.2, div_limits=[-1.0e-3, 1.0e-3], e_beam_vert_div=0.0, plot=False):
 
