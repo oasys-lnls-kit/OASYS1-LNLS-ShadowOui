@@ -31,7 +31,7 @@ In this example, we show how to calculate total flux and power contained in a br
 - `Partial Vertical Acceptance`: If `No`, it is supposed that the source widget is set with vertical divergence limits larger than the total vertical divergence of the beam. If the divergence limits on the source widget does crop the beam, use the `Yes` option. This will calculate the vertical angular distribution of a bending magnet for each energy and integrate only inside the defined limits.
 - `e-beam Divergence RMS V`: This is an optional parameter. If the value is 0 (zero), it will be ignored. If it is larger than 0, the electron beam divergence sigma (RMS) in the vertical direction will be convolved with the radiation angular probability density function to include the finite emittance. Note that the approximation that the radiation contribution is much larger than the electron beam divergence is very good for most cases.
 
-The bending magnet parameters are the ESRF standard ones, and the first hamonic of the multilayer is set to about 32.0 keV (figure below).
+The bending magnet parameters are the ESRF standard ones, and the first harmonic of the multilayer is set to about 32.0 keV (figure below).
  
 ![widgetsB](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/ExampleB_widgets.png "widgetsB")
 
