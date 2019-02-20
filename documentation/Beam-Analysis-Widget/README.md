@@ -4,7 +4,7 @@ The Beam Analysis is based on the PlotXY widget and gives some options to the us
 
 Apart from the statistical calculations, it is also possible to customize the axis labels, add a small text with a description of the simulation to the figure, and show up to 3 texts in the figure (with beam size, for example). The figure can then be exported to a png file. The 2D histogram can also be exported as a matrix that can be readily imported in python, excel, or anything else. 
 
-![gui](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/BeamAnalysisWidgetGUI.png "GUI")
+![BAgui](https://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui/blob/master/images/BeamAnalysisWidgetGUI.png "BAGUI")
 
 ### Options (Calculations Settings Tab)
 
