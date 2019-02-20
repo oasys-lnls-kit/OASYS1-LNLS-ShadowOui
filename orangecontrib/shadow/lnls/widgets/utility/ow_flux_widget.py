@@ -98,7 +98,10 @@ class FluxWidget(LNLSShadowWidget):
     flux_total=Setting(0)
     power_total=Setting(0)
     keep_result=Setting(0)
+    showflux=Setting(0)
+    showpower=Setting(0)
     output_filename=Setting("output.dat")
+    fig_filename=Setting("output.png")
    
     def __init__(self):
         super().__init__()
@@ -227,11 +230,23 @@ class FluxWidget(LNLSShadowWidget):
         self.pxz = oasysgui.lineEdit(config_box, self, "lim_f_z", "Source Acceptance +Z [rad] ", 
                           labelWidth=220, valueType=float, controlWidth=100, orientation="horizontal")
         
-        print_box = oasysgui.widgetBox(tab_config, "Download Data", addSpace=True, orientation="vertical", height=150)
+        print_box = oasysgui.widgetBox(tab_config, "Save Data", addSpace=True, orientation="vertical", height=260)
+
+#        self.flux_is_displayed = False
+#        self.power_is_displayed = False        
+        gui.checkBox(print_box, self, "showflux", "Show Flux", callback=self.showFlux)
+        gui.checkBox(print_box, self, "showpower", "Show Power", callback=self.showPower)
+        
         self.select_file_box = oasysgui.widgetBox(print_box, "", addSpace=True, orientation="horizontal")
-        self.le_file_name = oasysgui.lineEdit(self.select_file_box, self, "output_filename", "Output File Name",
-                                                        labelWidth=120, valueType=str, orientation="horizontal")
-        gui.button(print_box, self, "Generate Output", callback=self.down_data, height=35,width=200)
+        oasysgui.lineEdit(self.select_file_box, self, "output_filename", "File Name",
+                          labelWidth=120, valueType=str, orientation="horizontal")
+        gui.button(print_box, self, "Save Data to txt", callback=self.down_data, height=35,width=200)
+        
+        gui.separator(self.select_file_box)
+        self.select_file_box2 = oasysgui.widgetBox(print_box, "", addSpace=True, orientation="horizontal")
+        oasysgui.lineEdit(self.select_file_box2, self, "fig_filename", "Figure Name",
+                          labelWidth=120, valueType=str, orientation="horizontal")
+        gui.button(print_box, self, "Save Figure", callback=self.down_fig, height=35, width=200)
 
     
        
@@ -452,7 +467,7 @@ class FluxWidget(LNLSShadowWidget):
        #Intesity Spectrum at Sample
         En = beam_to_plot.getshonecol(11, nolost=1)
         I = beam_to_plot.getshonecol(23, nolost=1)
-        histoI = numpy.histogram(En, self.number_of_bins, weights=I)[0]
+        self.histoI = numpy.histogram(En, self.number_of_bins, weights=I)[0]
         self.En_coord = numpy.linspace(numpy.min(En), numpy.max(En),self.number_of_bins)
         
        #Collect intensity from Shadow Source
@@ -462,7 +477,7 @@ class FluxWidget(LNLSShadowWidget):
        #Creates source histogram from sample energy range
         I0_new = I0[numpy.logical_and(En0>=numpy.min(En),En0<=numpy.max(En))]
         En0_new = En0[numpy.logical_and(En0>=numpy.min(En),En0<=numpy.max(En))]
-        histoI0 = numpy.histogram(En0_new, self.number_of_bins , weights=I0_new)[0] 
+        self.histoI0 = numpy.histogram(En0_new, self.number_of_bins , weights=I0_new)[0] 
 
        #Collect beam info       
         info_beam = beam_to_plot.histo1(1)
@@ -550,7 +565,7 @@ class FluxWidget(LNLSShadowWidget):
 
         
         #Flux Spectrum at Sample
-        self.T1 = histoI/histoI0
+        self.T1 = self.histoI/self.histoI0
         Flux_eV = self.source_spec*(1000.0/self.En_coord)
         Flux_sample = Flux_eV*self.T1*self.vert_acc
         Power_sample = Flux_eV*self.T1*self.vert_acc*self.En_coord*1.60217662e-19
@@ -559,21 +574,25 @@ class FluxWidget(LNLSShadowWidget):
         self.Power = (simps(Power_sample,x=self.En_coord)*(0.1/self.current))
         
         self.flux_total = ("{:.2e}".format(self.Flux))
-        self.power_total = ("{:.3f}".format(self.Power))
+        self.power_total = ("{:.2e}".format(self.Power))
         
         print(sp+'### Results ###')
         print(sp+sp+'Total Flux = {:.3e}'.format(self.Flux) + ' ph/s/100 mA')
-        print(sp+sp+'Total Power = {:.3f}'.format(self.Power)+' W')
+        print(sp+sp+'Total Power = {:.3e}'.format(self.Power)+' W')
         print('\n')
-              
+                     
         #Plot Flux after element
+        self.beamline_flux = self.source_spec*self.T1*self.vert_acc
         self.plot_canvas.clear()
         self.plot_canvas.setGraphYLabel("Flux [ph/s/100mA/0.1%bW]")
         self.plot_canvas.setGraphXLabel("Energy [eV]")        
         self.plot_canvas.setGraphTitle('Beamline Spectrum')
-        self.plot_canvas.addCurve(self.En_coord,self.source_spec*self.T1*self.vert_acc,color='blue',symbol='.',linewidth=2)
+        self.plot_canvas.addCurve(self.En_coord,self.beamline_flux,color='blue',symbol='.',linewidth=2)
         self.image_box.layout().addWidget(self.plot_canvas)
-
+#        self.showflux = 0
+#        self.showpower = 0
+        self.showFlux()
+        self.showPower()
 #        
         #Plot Source Flux 
         self.plot_canvas2.clear()
@@ -598,8 +617,8 @@ class FluxWidget(LNLSShadowWidget):
         self.plot_canvas4.setGraphYLabel("Intensity")
         self.plot_canvas4.setGraphXLabel("Energy [eV]")     
         self.plot_canvas4.setGraphTitle('Intensity Histograms')
-        self.plot_canvas4.addCurve(self.En_coord,histoI0,legend='Source',color='green')                   
-        self.plot_canvas4.addCurve(self.En_coord,histoI,legend='Element',color='red')
+        self.plot_canvas4.addCurve(self.En_coord,self.histoI0,legend='Source',color='green')                   
+        self.plot_canvas4.addCurve(self.En_coord,self.histoI,legend='Element',color='red')
         self.image_box4.layout().addWidget(self.plot_canvas4)
         
         #Plot Acceptance
@@ -791,10 +810,52 @@ class FluxWidget(LNLSShadowWidget):
         print('\n'+'EXECUTION FINISHED AT: ', end='')
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), '\n')
         
+    def showFlux(self):
+                
+        if(self.showflux == 1):
+            
+            plot_ftext = 'Total Flux' + '\n  ' + self.flux_total + '\n  ' + 'ph/s/100mA' 
+            eRange = numpy.max(self.En_coord) - numpy.min(self.En_coord)
+            fluxRange = numpy.max(self.beamline_flux) - numpy.min(self.beamline_flux) 
+            self.plot_canvas.remove(legend='fMarker', kind='marker')
+            self.plot_canvas.addMarker(x=numpy.min(self.En_coord)+eRange*0.02, y=numpy.min(self.beamline_flux)+fluxRange*0.98, legend='fMarker', text=plot_ftext, color='black', selectable=True, draggable=True, symbol='none')
+        
+        if(self.showflux == 0):
+            self.plot_canvas.remove(legend='fMarker', kind='marker')
+            
+    def showPower(self):
+
+        if(self.showpower == 1):            
+                
+            plot_ptext = 'Total Power' + '\n  ' + self.power_total + '\n  ' + 'W/100mA'
+            eRange = numpy.max(self.En_coord) - numpy.min(self.En_coord)
+            fluxRange = numpy.max(self.beamline_flux) - numpy.min(self.beamline_flux) 
+            self.plot_canvas.remove(legend='pMarker', kind='marker')
+            self.plot_canvas.addMarker(x=numpy.min(self.En_coord)+eRange*0.02, y=numpy.min(self.beamline_flux)+fluxRange*0.85, legend='pMarker', text=plot_ptext, color='black', selectable=True, draggable=True, symbol='none')
+        
+        if(self.showpower == 0):
+            self.plot_canvas.remove(legend='pMarker', kind='marker')
+
+            
     def down_data(self):
         numpy.savetxt(self.output_filename, 
-                      numpy.array([self.En_coord,self.T1,self.source_spec*self.ver_accep,self.T1*self.source_spec*self.ver_accep]).T, 
-                      header='Energy [eV] \t Transmission \t Source Spectrum [ph/s/100mA/0.1%bW] \t Beamline Spectrum [ph/s/100mA/0.1%bW]')       
+                      numpy.array([self.En_coord,
+                                   self.histoI0,
+                                   self.histoI,
+                                   self.T1,
+                                   self.source_spec*self.ver_accep,
+                                   self.T1*self.source_spec*self.ver_accep]).T, 
+                      fmt='%.8e',
+                      header='Total Flux [ph/s/100mA]  \n' + self.flux_total + '\n' + 'Total Power [W/100mA] \n' + self.power_total + '\n' +
+                             'Energy [eV] \
+                              Source Histogram \
+                              Beamline Histogram \
+                              Transmission \
+                              Source Spectrum [ph/s/100mA/0.1%bW] \
+                              Beamline Spectrum [ph/s/100mA/0.1%bW]')       
+    def down_fig(self):
+        
+        self.plot_canvas.saveGraph(self.fig_filename, fileFormat='png', dpi=400)
     
     def BM_vertical_acc(self, E=3.0, B=3.2, ph_energy=1915.2, div_limits=[-1.0e-3, 1.0e-3], e_beam_vert_div=0.0, plot=False):
 
