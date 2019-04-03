@@ -938,33 +938,34 @@ class CausticWidget(LNLSShadowWidgetC):
             flYZ = total_limits
         
         try:
+#            sys.stdout.write('\n beta guess = {0:.6f}\n'.format(x_properties[0][int(nz/2)]/((x_properties[0][-1] -x_properties[0][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))))
             popt1, pcov1 = curve_fit(f=self.gaussian_beam, xdata=z_points[flXZ], ydata=x_properties[0][flXZ], 
-                                     p0=[x_properties[0][int(nz/2)], z_points[int(nz/2.2)], x_properties[0][int(nz/2)]*((x_properties[0][-1] -x_properties[0][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
+                                     p0=[x_properties[0][int(nz/2)], z_points[int(nz/2.2)], x_properties[0][int(nz/2)]/((x_properties[0][-1] -x_properties[0][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
         except:
             popt1=[0]*3 
         try:
             popt2, pcov2 = curve_fit(f=self.gaussian_beam, xdata=z_points[flXZ], ydata=x_properties[1][flXZ], 
-                                     p0=[x_properties[1][int(nz/2)], z_points[int(nz/2.2)], x_properties[1][int(nz/2)]*((x_properties[1][-1] -x_properties[1][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
+                                     p0=[x_properties[1][int(nz/2)], z_points[int(nz/2.2)], x_properties[1][int(nz/2)]/((x_properties[1][-1] -x_properties[1][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
         except:
             popt2=[0]*3 
         try:
             popt3, pcov3 = curve_fit(f=self.gaussian_beam, xdata=z_points[flXZ], ydata=x_properties[4][flXZ], 
-                                     p0=[x_properties[4][int(nz/2)], z_points[int(nz/2.2)], x_properties[4][int(nz/2)]*((x_properties[4][-1] -x_properties[4][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
+                                     p0=[x_properties[4][int(nz/2)], z_points[int(nz/2.2)], x_properties[4][int(nz/2)]/((x_properties[4][-1] -x_properties[4][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
         except:
             popt3=[0]*3
         try:
             popt4, pcov4 = curve_fit(f=self.gaussian_beam, xdata=z_points[flYZ], ydata=y_properties[0][flYZ], 
-                                     p0=[y_properties[0][int(nz/2)], z_points[int(nz/2.2)], y_properties[0][int(nz/2)]*((y_properties[0][-1] -y_properties[0][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
+                                     p0=[y_properties[0][int(nz/2)], z_points[int(nz/2.2)], y_properties[0][int(nz/2)]/((y_properties[0][-1] -y_properties[0][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
         except:
             popt4=[0]*3
         try:
             popt5, pcov5 = curve_fit(f=self.gaussian_beam, xdata=z_points[flYZ], ydata=y_properties[1][flYZ], 
-                                     p0=[y_properties[1][int(nz/2)], z_points[int(nz/2.2)], y_properties[1][int(nz/2)]*((y_properties[1][-1] -y_properties[1][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
+                                     p0=[y_properties[1][int(nz/2)], z_points[int(nz/2.2)], y_properties[1][int(nz/2)]/((y_properties[1][-1] -y_properties[1][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
         except:
             popt5=[0]*3
         try:
             popt6, pcov6 = curve_fit(f=self.gaussian_beam, xdata=z_points[flYZ], ydata=y_properties[4][flYZ], 
-                                     p0=[y_properties[4][int(nz/2)], z_points[int(nz/2.2)], x_properties[4][int(nz/2)]*((x_properties[4][-1] -x_properties[4][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
+                                     p0=[y_properties[4][int(nz/2)], z_points[int(nz/2.2)], x_properties[4][int(nz/2)]/((x_properties[4][-1] -x_properties[4][int(nz/2)]) / (z_points[-1] - z_points[int(nz/2)]))], maxfev=5000)
         except:
             popt6=[0]*3
         

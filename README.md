@@ -13,7 +13,7 @@ By this time, 3 widgets are available. Please see the [documentation](documentat
 
 1. [Flux Widget](documentation/Flux-Widget) calculates flux and power in physical units after the beamline (for bending magnets, wigglers and linear undulators). It is also compatible with the geometrical source with uniform energy distribution (recommended).
 
-2. [Beam Analysis Widget](documentation/Beam-Analysis-Widget) is similar to plotXY, but with some built-in functionalities, such as slicing, fitting, statistical calulations, label customization and more.
+2. [Beam Analysis Widget](documentation/Beam-Analysis-Widget) is similar to plotXY, but with some built-in functionalities, such as slicing, fitting, statistical calculations, label customization and more.
 
 3. [Caustic Widget](documentation/Caustic-Widget) displays the beam propagation in a "caustic" fashion, in both 2D and 3D visualization with interactive slicing. It also calculates the beam RMS and FWHM minimum, like FocNew widget.
 
