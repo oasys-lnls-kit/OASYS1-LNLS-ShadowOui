@@ -7,7 +7,7 @@ import subprocess
 
 NAME = 'OASYS1-LNLS-ShadowOui'
 
-VERSION = '0.0.4'
+VERSION = '0.0.5'
 ISRELEASED = False
 
 DESCRIPTION = 'WIDGETS DEVELOPED FOR LNLS TO EXTEND SHADOWOUI FUNCTIONALITIES'
@@ -43,6 +43,8 @@ SETUP_REQUIRES = (
 
 INSTALL_REQUIRES = (
                     'setuptools',
+                    'OASYS1-ShadowOui',
+                    'OASYS1-SRW',
                    )
 
 if len({'develop', 'release', 'bdist_egg', 'bdist_rpm', 'bdist_wininst',
@@ -67,7 +69,7 @@ PACKAGE_DATA = {"orangecontrib.shadow.lnls.widgets.utility":["icons/*.png", "ico
                 "orangecontrib.shadow.lnls.data":["data/*.*"],
 }
 
-NAMESPACE_PACAKGES = ["orangecontrib","orangecontrib.shadow", "orangecontrib.shadow.lnls", "orangecontrib.shadow.lnls.widgets"]
+NAMESPACE_PACKAGES = ["orangecontrib","orangecontrib.shadow", "orangecontrib.shadow.lnls", "orangecontrib.shadow.lnls.widgets"]
 
 ENTRY_POINTS = {
     'oasys.addons' : ("LNLS ShadowOui = orangecontrib.shadow.lnls", ),
@@ -105,7 +107,7 @@ if __name__ == '__main__':
               #extras_require = EXTRAS_REQUIRE,
               #dependency_links = DEPENDENCY_LINKS,
               entry_points = ENTRY_POINTS,
-              namespace_packages=NAMESPACE_PACAKGES,
+              namespace_packages=NAMESPACE_PACKAGES,
               include_package_data = True,
               zip_safe = False,
               )

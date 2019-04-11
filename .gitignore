@@ -2,5 +2,6 @@ orangecontrib/shadow/lnls/widgets/optical_elements
 orangecontrib/shadow/lnls/widgets/sources
 dist*
 build*
+.idea*
 *.pyc
 OASYS1_LNLS_ShadowOui.egg-info*
