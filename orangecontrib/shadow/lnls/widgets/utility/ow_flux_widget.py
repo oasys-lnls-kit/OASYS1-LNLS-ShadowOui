@@ -35,8 +35,8 @@ except ImportError:
     raise ImportError('FLUX needs module scipy')
     
 try:    
-    from srwlib import SRWLMagFldU, SRWLMagFldH, SRWLPartBeam, SRWLStokes
-    from srwlpy import CalcStokesUR
+    from oasys_srw.srwlib import SRWLMagFldU, SRWLMagFldH, SRWLPartBeam, SRWLStokes
+    #from oasys_srw.srwlpy import CalcStokesUR
 except ImportError:
     raise ImportError('FLUX needs module srwlib and srwlpy')
     
@@ -748,7 +748,7 @@ class FluxWidget(LNLSShadowWidget):
         
         #**********************Calculation (SRWLIB function calls)
         #print('   Performing Spectral Flux (Stokes parameters) calculation ... ')
-        CalcStokesUR(stkF, eBeam, und, arPrecF)
+        srwl.CalcStokesUR(stkF, eBeam, und, arPrecF)
         #print('done')
         
         return numpy.array(stkF.arS[0:energy_grid[2]])    
