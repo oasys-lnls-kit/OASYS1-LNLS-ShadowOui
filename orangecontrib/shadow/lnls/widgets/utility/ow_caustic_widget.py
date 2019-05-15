@@ -551,7 +551,7 @@ class CausticWidget(LNLSShadowWidgetC):
                 self.print_date_i()
                 sys.stdout.write("Running Caustic... ")
                 sys.stdout.flush()
-                self.run_shadow_caustic(filename=self.save_filename, beam=self.input_beam._beam, 
+                self.run_shadow_caustic(filename=self.save_filename, beam=self.input_beam._beam.duplicate(), 
                                         zStart=self.z_range_min, zFin=self.z_range_max, nz=self.nz, zOffset=self.z_offset,
                                         colh=self.x_column_index+1, colv=self.y_column_index+1, colref=self.weight_column_index,
                                         nbinsh=self.x_nbins, nbinsv=self.y_nbins, 
