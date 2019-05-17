@@ -254,7 +254,12 @@ class CausticWidget(LNLSShadowWidgetC):
 #        gui.button(button_box2, self, "Save 2D Plots", callback=self.save_2D_plots, height=28, width=140)
 
         self.options2D_box = oasysgui.widgetBox(tab2, "Read File", addSpace=True, orientation="vertical", height=140)
-        oasysgui.lineEdit(self.options2D_box, self, "load_filename", "HDF5 File Name (.h5)", labelWidth=160, valueType=str, orientation="horizontal")
+
+        button_file_box = oasysgui.widgetBox(self.options2D_box, "", addSpace=False, orientation="horizontal")
+        self.le_load_filename = oasysgui.lineEdit(button_file_box, self, "load_filename", "HDF5 File Name (.h5)", 
+                                                  controlWidth=160, labelWidth=160, valueType=str, orientation="horizontal")
+        button_file = gui.button(button_file_box, self, u"\U0001F50D", callback=self.selectOptimizeFile)
+        button_file.setFixedWidth(40)
         
         button_box = oasysgui.widgetBox(self.options2D_box, "", addSpace=False, orientation="horizontal")
 
@@ -266,7 +271,7 @@ class CausticWidget(LNLSShadowWidgetC):
         palette.setColor(QPalette.ButtonText, QColor('Dark Blue'))
         button1.setPalette(palette) # assign new palette
         button1.setFixedHeight(28)
-        button1.setFixedWidth(140)
+        button1.setFixedWidth(180)
 
         button2 = gui.button(button_box, self, "Save 2D Plots", callback=self.save_2D_plots)
         font = QFont(button2.font())
@@ -276,7 +281,7 @@ class CausticWidget(LNLSShadowWidgetC):
         palette.setColor(QPalette.ButtonText, QColor('Dark Green'))
         button2.setPalette(palette) # assign new palette
         button2.setFixedHeight(28)
-        button2.setFixedWidth(140)
+        button2.setFixedWidth(180)
 
         button_box2 = oasysgui.widgetBox(self.options2D_box, "", addSpace=False, orientation="vertical")
 
@@ -288,7 +293,7 @@ class CausticWidget(LNLSShadowWidgetC):
         palette.setColor(QPalette.ButtonText, QColor('Dark Red'))
         button3.setPalette(palette) # assign new palette
         button3.setFixedHeight(28)
-        button3.setFixedWidth(280)
+        button3.setFixedWidth(364)
 
         
 #        gui.button(self.options2D_box, self, "Refresh Plots ", callback=self.refresh2D, height=25, width=150)
@@ -450,6 +455,9 @@ class CausticWidget(LNLSShadowWidgetC):
 #################################################################################
 #################################################################################
 #################################################################################
+
+    def selectOptimizeFile(self):
+        self.le_load_filename.setText(oasysgui.selectFileFromDialog(self, self.load_filename, "Open Caustic .h5 File"))
 
     def step_and_nz(self):
         try:
