@@ -35,7 +35,7 @@ except ImportError:
     raise ImportError('FLUX needs module scipy')
     
 try:    
-    from oasys_srw.srwlib import SRWLMagFldU, SRWLMagFldH, SRWLPartBeam, SRWLStokes
+    from oasys_srw.srwlib import SRWLMagFldU, SRWLMagFldH, SRWLPartBeam, SRWLStokes, srwl
     #from oasys_srw.srwlpy import CalcStokesUR
 except ImportError:
     raise ImportError('FLUX needs module srwlib and srwlpy')
