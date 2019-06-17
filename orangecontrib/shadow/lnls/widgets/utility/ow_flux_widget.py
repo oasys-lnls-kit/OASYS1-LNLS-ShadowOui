@@ -843,8 +843,8 @@ class FluxWidget(LNLSShadowWidget):
                                    self.histoI0,
                                    self.histoI,
                                    self.T1,
-                                   self.source_spec*self.ver_accep,
-                                   self.T1*self.source_spec*self.ver_accep]).T, 
+                                   self.source_spec*self.vert_acc,
+                                   self.T1*self.source_spec*self.vert_acc]).T, 
                       fmt='%.8e',
                       header='Total Flux [ph/s/100mA]  \n' + self.flux_total + '\n' + 'Total Power [W/100mA] \n' + self.power_total + '\n' +
                              'Energy [eV] \
