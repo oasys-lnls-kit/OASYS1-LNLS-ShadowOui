@@ -820,6 +820,66 @@ class CausticWidget(LNLSShadowWidgetC):
     
         return [rh_min, rh_max, rv_min, rv_max] 
     
+#    def initialize_hdf5(self, h5_filename, zStart, zFin, nz, zOffset, colh, colv, colref, nbinsh, nbinsv, good_rays, offsets=None):
+#        with h5py.File(h5_filename, 'w') as f:
+#            f.attrs['begin time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+#            f.attrs['zStart'] = zStart
+#            f.attrs['zFin'] = zFin
+#            f.attrs['nz'] = nz
+#            f.attrs['zOffset'] = zOffset
+#            f.attrs['zStep'] = int((zFin - zStart) / (nz - 1))
+#            f.attrs['col_h'] = colh
+#            f.attrs['col_v'] = colv
+#            f.attrs['col_ref'] = colref
+#            f.attrs['nbins_h'] = nbinsh
+#            f.attrs['nbins_v'] = nbinsv
+#            f.attrs['good_rays'] = good_rays
+#            if offsets is not None:
+#                f.attrs['offsets'] = offsets
+#            
+#    
+#    def append_dataset_hdf5(self, filename, data, z, zOffset, nz, tag, t0, ndigits):
+#        
+#        mean_h, rms_h = self.weighted_avg_and_std(data['bin_h_center'], data['histogram_h']) 
+#        mean_v, rms_v = self.weighted_avg_and_std(data['bin_v_center'], data['histogram_v'])
+#        fwhm_h = self.get_fwhm(data['bin_h_center'], data['histogram_h'])
+#        fwhm_v = self.get_fwhm(data['bin_v_center'], data['histogram_v'])
+#        
+#        with h5py.File(filename, 'a') as f:
+#            dset = f.create_dataset('step_{0:0{ndigits}d}'.format(tag, ndigits=ndigits),
+#                                    data=np.array(data['histogram'], dtype=np.float), compression="gzip")
+#            dset.attrs['z'] = z + zOffset
+#            dset.attrs['xStart'] = data['bin_h_center'].min()
+#            dset.attrs['xFin'] = data['bin_h_center'].max()
+#            dset.attrs['nx'] = data['nbins_h']
+#            dset.attrs['yStart'] = data['bin_v_center'].min()
+#            dset.attrs['yFin'] = data['bin_v_center'].max()
+#            dset.attrs['ny'] = data['nbins_v']
+#            dset.attrs['mean_h'] = mean_h
+#            dset.attrs['mean_v'] = mean_v
+#            dset.attrs['rms_h'] = rms_h
+#            dset.attrs['rms_v'] = rms_v
+#            dset.attrs['fwhm_h'] = fwhm_h
+#            dset.attrs['fwhm_v'] = fwhm_v
+#            dset.attrs['ellapsed time (s)'] = round(time.time() - t0, 3)
+#            
+#            try:
+#                dset.attrs['fwhm_h_shadow'] = data['fwhm_h']
+#                dset.attrs['center_h_shadow'] = (data['fwhm_coordinates_h'][0] + data['fwhm_coordinates_h'][1]) / 2.0
+#            except:
+#                print('   CAUSTIC WARNING: FWHM X could not be calculated by Shadow')
+#                dset.attrs['fwhm_h_shadow'] = np.nan
+#                dset.attrs['center_h_shadow'] = np.nan
+#            try:
+#                dset.attrs['fwhm_v_shadow'] = data['fwhm_v']
+#                dset.attrs['center_v_shadow'] = (data['fwhm_coordinates_v'][0] + data['fwhm_coordinates_v'][1]) / 2.0
+#            except:
+#                print('   CAUSTIC WARNING: FWHM Y could not be calculated by Shadow')
+#                dset.attrs['fwhm_v_shadow'] = np.nan
+#                dset.attrs['center_v_shadow'] = np.nan
+
+    #def append_dataset_hdf5(self, filename, data, z, zOffset, nz, tag, t0, ndigits):
+
     def initialize_hdf5(self, h5_filename, zStart, zFin, nz, zOffset, colh, colv, colref, nbinsh, nbinsv, good_rays, offsets=None):
         with h5py.File(h5_filename, 'w') as f:
             f.attrs['begin time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -867,16 +927,19 @@ class CausticWidget(LNLSShadowWidgetC):
                 dset.attrs['fwhm_h_shadow'] = data['fwhm_h']
                 dset.attrs['center_h_shadow'] = (data['fwhm_coordinates_h'][0] + data['fwhm_coordinates_h'][1]) / 2.0
             except:
-                print('   CAUSTIC WARNING: FWHM X could not be calculated by Shadow')
+                print('CAUSTIC WARNING: FWHM X could not be calculated by Shadow')
                 dset.attrs['fwhm_h_shadow'] = np.nan
                 dset.attrs['center_h_shadow'] = np.nan
             try:
                 dset.attrs['fwhm_v_shadow'] = data['fwhm_v']
                 dset.attrs['center_v_shadow'] = (data['fwhm_coordinates_v'][0] + data['fwhm_coordinates_v'][1]) / 2.0
             except:
-                print('   CAUSTIC WARNING: FWHM Y could not be calculated by Shadow')
+                print('CAUSTIC WARNING: FWHM Y could not be calculated by Shadow')
                 dset.attrs['fwhm_v_shadow'] = np.nan
                 dset.attrs['center_v_shadow'] = np.nan
+                
+            if (tag == nz - 1):
+                f.attrs['end time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
                 
     def run_shadow_caustic(self, filename, beam, zStart, zFin, nz, zOffset, colh, colv, colref, nbinsh, nbinsv, xrange, yrange):
@@ -894,6 +957,7 @@ class CausticWidget(LNLSShadowWidgetC):
     def plot_shadow_caustic(self, filename, cut_pos_x=0.0, cut_pos_y=0.0, cut_pos_z=0.0, nx=0, ny=0, scale=0, 
                             xrange=[0,0], yrange=[0,0], zrange=[0,0], zrangeXZ=[0,0], zrangeYZ=[0,0], xunits=0, yunits=0, zunits=0):
         
+        self.print_date_i()     
         
         if(xunits==0): 
             ylabelXZ = 'mm'
@@ -1129,7 +1193,7 @@ class CausticWidget(LNLSShadowWidgetC):
         self.outtext += "Minimum Z (average) = {0:.3f} {1}\n".format(np.mean([outdict["popt_fwhm_y_cut"][1], outdict["popt_fwhm_y_histo"][1], outdict["popt_rms_y_cut"][1]]), xlabelXZ)
         self.outtext += "Betas: (cut-FWHM, histo-FWHM, cut-RMS) = {0:.6f}, {1:.6f}, {2:.6f} {3}\n".format(outdict["popt_fwhm_y_cut"][2], outdict["popt_fwhm_y_histo"][2], outdict["popt_rms_y_cut"][2], xlabelYZ)
         
-        self.print_date_i()
+
         self.time_string = time.strftime("%Y-%m-%d-%Hh-%Mm-%Ss", time.localtime())
         sys.stdout.write(self.outtext)
         self.print_date_f()        
