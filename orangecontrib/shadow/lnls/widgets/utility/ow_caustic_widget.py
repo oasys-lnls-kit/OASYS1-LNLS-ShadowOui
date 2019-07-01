@@ -941,6 +941,196 @@ class CausticWidget(LNLSShadowWidgetC):
             if (tag == nz - 1):
                 f.attrs['end time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
+    def read_caustic(self, filename, write_attributes=False, plot=False, plot2D=False, print_minimum=False):
+        
+        with h5py.File(filename, 'r+') as f:
+        
+            dset_names = list(f.keys())
+            
+            center_shadow = np.zeros((len(dset_names), 2), dtype=float)
+            center = np.zeros((len(dset_names), 2), dtype=float)
+            rms = np.zeros((len(dset_names), 2), dtype=float)
+            fwhm = np.zeros((len(dset_names), 2), dtype=float)
+            fwhm_shadow = np.zeros((len(dset_names), 2), dtype=float)
+            
+            ###### READ DATA #######################
+            
+            zStart = f.attrs['zStart']
+            zFin = f.attrs['zFin']
+            nz = f.attrs['nz']
+                    
+            if(plot2D): 
+                xStart = f[dset_names[0]].attrs['xStart']
+                xFin = f[dset_names[0]].attrs['xFin']
+                nx = f[dset_names[0]].attrs['nx']
+                yStart = f[dset_names[0]].attrs['yStart']
+                yFin = f[dset_names[0]].attrs['yFin']
+                ny = f[dset_names[0]].attrs['ny']
+                histoH = np.zeros((nx, nz))
+                histoV = np.zeros((ny, nz))
+            
+            z_points = np.linspace(zStart, zFin, nz)
+            
+            for i, dset in enumerate(dset_names):
+                #dset_keys = list(f[dset].attrs.keys())
+            
+                center_shadow[i,0] = f[dset].attrs['center_h_shadow']
+                center_shadow[i,1] = f[dset].attrs['center_v_shadow']
+                center[i,0] = f[dset].attrs['mean_h']    
+                center[i,1] = f[dset].attrs['mean_v']
+                rms[i,0] = f[dset].attrs['rms_h']    
+                rms[i,1] = f[dset].attrs['rms_v']
+                fwhm[i,0] = f[dset].attrs['fwhm_h'][0]
+                fwhm[i,1] = f[dset].attrs['fwhm_v'][0]
+                fwhm_shadow[i,0] = f[dset].attrs['fwhm_h_shadow']    
+                fwhm_shadow[i,1] = f[dset].attrs['fwhm_v_shadow']
+                
+                if(plot2D):
+                    histo2D = np.array(f[dset])
+                    histoH[:,i] = histo2D.sum(axis=1)
+                    histoV[:,i] = histo2D.sum(axis=0)
+                    
+        #### FIND MINIMUMS AND ITS Z POSITIONS
+    
+        rms_min = [np.min(rms[:,0]), np.min(rms[:,1])]
+        fwhm_min = [np.min(fwhm[:,0]), np.min(fwhm[:,1])]
+        fwhm_shadow_min = [np.min(fwhm_shadow[:,0]), np.min(fwhm_shadow[:,1])]
+    
+        rms_min_z=np.array([z_points[np.abs(rms[:,0]-rms_min[0]).argmin()],
+                            z_points[np.abs(rms[:,1]-rms_min[1]).argmin()]])
+    
+        fwhm_min_z=np.array([z_points[np.abs(fwhm[:,0]-fwhm_min[0]).argmin()],
+                             z_points[np.abs(fwhm[:,1]-fwhm_min[1]).argmin()]])
+    
+        fwhm_shadow_min_z=np.array([z_points[np.abs(fwhm_shadow[:,0]-fwhm_shadow_min[0]).argmin()],
+                                    z_points[np.abs(fwhm_shadow[:,1]-fwhm_shadow_min[1]).argmin()]])
+    
+        center_rms = np.array([center[:,0][np.abs(z_points-rms_min_z[0]).argmin()],
+                               center[:,1][np.abs(z_points-rms_min_z[1]).argmin()]])
+    
+        center_fwhm = np.array([center[:,0][np.abs(z_points-fwhm_min_z[0]).argmin()],
+                                center[:,1][np.abs(z_points-fwhm_min_z[1]).argmin()]])
+    
+        center_fwhm_shadow = np.array([center[:,0][np.abs(z_points-fwhm_shadow_min_z[0]).argmin()],
+                                       center[:,1][np.abs(z_points-fwhm_shadow_min_z[1]).argmin()]])
+     
+        
+        outdict = {'zStart': zStart,
+                   'zFin': zFin,
+                   'nz': nz,
+                   'center_h_array': center[:,0], 
+                   'center_v_array': center[:,1],
+                   'center_shadow_h_array': center_shadow[:,0], 
+                   'center_shadow_v_array': center_shadow[:,1],
+                   'rms_h_array': rms[:,0], 
+                   'rms_v_array': rms[:,1],
+                   'fwhm_h_array': fwhm[:,0], 
+                   'fwhm_v_array': fwhm[:,1],
+                   'fwhm_shadow_h_array': fwhm_shadow[:,0], 
+                   'fwhm_shadow_v_array': fwhm_shadow[:,1],
+                   'rms_min_h': rms_min[0],
+                   'rms_min_v': rms_min[1],
+                   'fwhm_min_h': fwhm_min[0],
+                   'fwhm_min_v': fwhm_min[1],
+                   'fwhm_shadow_min_h': fwhm_shadow_min[0],
+                   'fwhm_shadow_min_v': fwhm_shadow_min[1],
+                   'z_rms_min_h': rms_min_z[0],
+                   'z_rms_min_v': rms_min_z[1],
+                   'z_fwhm_min_h': fwhm_min_z[0],
+                   'z_fwhm_min_v': fwhm_min_z[1],
+                   'z_fwhm_shadow_min_h': fwhm_shadow_min_z[0],
+                   'z_fwhm_shadow_min_v': fwhm_shadow_min_z[1],
+                   'center_rms_h': center_rms[0],
+                   'center_rms_v': center_rms[1],
+                   'center_fwhm_h': center_fwhm[0],
+                   'center_fwhm_v': center_fwhm[1],
+                   'center_fwhm_shadow_h': center_fwhm_shadow[0],
+                   'center_fwhm_shadow_v': center_fwhm_shadow[1]}
+        
+        if(write_attributes):
+            with h5py.File(filename, 'a') as f:
+                for key in list(outdict.keys()):
+                    f.attrs[key] = outdict[key]
+        if(print_minimum):
+            print('\n   ****** \n' + '   Z min (rms-hor): {0:.3e}'.format(rms_min_z[0]))
+            print('   Z min (rms-vert): {0:.3e}\n   ******'.format(rms_min_z[1]))
+            
+        if(plot):
+            
+            plt.figure()
+            plt.title('rms')
+            plt.plot(z_points, rms[:,0], label='rms_h')
+            plt.plot(z_points, rms[:,1], label='rms_v')
+            plt.legend()
+            plt.minorticks_on()
+            plt.grid(which='both', alpha=0.2)    
+        
+            plt.figure()
+            plt.title('fwhm')
+            plt.plot(z_points, fwhm[:,0], label='fwhm_h')
+            plt.plot(z_points, fwhm[:,1], label='fwhm_v')
+            plt.plot(z_points, fwhm_shadow[:,0], label='fwhm_h_shadow')
+            plt.plot(z_points, fwhm_shadow[:,1], label='fwhm_v_shadow')
+            plt.legend()
+            plt.minorticks_on()
+            plt.grid(which='both', alpha=0.2)    
+            
+            plt.figure()
+            plt.title('center')
+            plt.plot(z_points, center[:,0], label='center_h')
+            plt.plot(z_points, center_shadow[:,0], label='center_h_shadow')
+            plt.legend()
+            plt.minorticks_on()
+            plt.grid(which='both', alpha=0.2)    
+            
+            plt.figure()
+            plt.title('center')
+            plt.plot(z_points, center[:,1], label='center_v')
+            plt.plot(z_points, center_shadow[:,1], label='center_v_shadow')
+            plt.legend()
+            plt.minorticks_on()
+            plt.grid(which='both', alpha=0.2)    
+                
+            plt.show()
+            
+        if(plot2D):
+            
+            plt.figure()
+            plt.title('XZ')
+            plt.imshow(histoH, extent=[zStart, zFin, xStart, xFin], origin='lower', aspect='auto')
+            plt.xlabel('Z')
+            plt.ylabel('Horizontal')
+    
+            plt.figure()
+            plt.title('YZ')
+            plt.imshow(histoV, extent=[zStart, zFin, yStart, yFin], origin='lower', aspect='auto')
+            plt.xlabel('Z')
+            plt.ylabel('Vertical')
+            
+        if(plot2D == 'log'):
+            
+            xc_min_except_0 = np.min(histoH[histoH>0])
+            histoH[histoH<=0.0] = xc_min_except_0/2.0
+            
+            plt.figure()
+            plt.title('XZ')
+            plt.imshow(histoH, extent=[zStart, zFin, xStart, xFin], origin='lower', aspect='auto',
+                       norm=LogNorm(vmin=xc_min_except_0/2.0, vmax=np.max(histoH)))
+            plt.xlabel('Z')
+            plt.ylabel('Horizontal')
+    
+            yc_min_except_0 = np.min(histoV[histoV>0])
+            histoV[histoV<=0.0] = yc_min_except_0/2.0
+    
+            plt.figure()
+            plt.title('YZ')
+            plt.imshow(histoV, extent=[zStart, zFin, yStart, yFin], origin='lower', aspect='auto',
+                       norm=LogNorm(vmin=xc_min_except_0/2.0, vmax=np.max(histoV)))
+            plt.xlabel('Z')
+            plt.ylabel('Vertical')
+        
+        
+        return outdict
                 
     def run_shadow_caustic(self, filename, beam, zStart, zFin, nz, zOffset, colh, colv, colref, nbinsh, nbinsv, xrange, yrange):
     
@@ -952,7 +1142,7 @@ class CausticWidget(LNLSShadowWidgetC):
             beam.retrace(z_points[i]);
             histo = beam.histo2(col_h=colh, col_v=colv, nbins_h=nbinsh, nbins_v=nbinsv, nolost=1, ref=colref, xrange=xrange, yrange=yrange);
             self.append_dataset_hdf5(filename, data=histo, z=z_points[i], zOffset=zOffset, nz=nz, tag=i+1, t0=t0, ndigits=len(str(nz)))
-    
+        self.read_caustic(filename, write_attributes=True)
     
     def plot_shadow_caustic(self, filename, cut_pos_x=0.0, cut_pos_y=0.0, cut_pos_z=0.0, nx=0, ny=0, scale=0, 
                             xrange=[0,0], yrange=[0,0], zrange=[0,0], zrangeXZ=[0,0], zrangeYZ=[0,0], xunits=0, yunits=0, zunits=0):
