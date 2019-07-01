@@ -49,15 +49,18 @@ class CausticWidget(LNLSShadowWidgetC):
     
     want_main_area=1
     
+    auto_xy_ranges = Setting(0)
     x_column_index = Setting(0)
     y_column_index = Setting(2)
     weight_column_index = Setting(23)
     x_range_min = Setting(-0.010)
     x_range_max = Setting(+0.010)
     x_nbins = Setting(200)
+    x_pixel = Setting(1)
     y_range_min = Setting(-0.010)
     y_range_max = Setting(+0.010)
     y_nbins = Setting(200)
+    y_pixel = Setting(1)
     z_range_min = Setting(-5.0)
     z_range_max = Setting(+5.0)
     z_step = Setting(0.1)
@@ -98,13 +101,15 @@ class CausticWidget(LNLSShadowWidgetC):
         
 
         ### Tabs inside control area ###
-        tab1 = oasysgui.createTabPage(self.tabs_setting, "Run Options", height=580)
+        tab1 = oasysgui.createTabPage(self.tabs_setting, "Run Options", height=840)
         tab2 = oasysgui.createTabPage(self.tabs_setting, "Plot Options" )
 
 
         ### Run Options Tab
         gui.button(tab1, self, "Run Caustic", callback=self.run_caustic, height=35,width=100)
-        general_box = oasysgui.widgetBox(tab1, "Variables Settings", addSpace=True, orientation="vertical", height=340)
+        general_box = oasysgui.widgetBox(tab1, "Variables Settings", addSpace=True, orientation="vertical", height=380)
+
+        gui.checkBox(general_box, self, "auto_xy_ranges", "Internal Calculated X,Y Ranges", callback=self.calc_rangesXY)
 
         self.x_column = gui.comboBox(general_box, self, "x_column_index", label="X Column",labelWidth=70,
                                      items=["1: X",
@@ -145,11 +150,13 @@ class CausticWidget(LNLSShadowWidgetC):
                                      sendSelectedValue=False, orientation="horizontal")
 
 
-        self.xrange_box = oasysgui.widgetBox(general_box, "", addSpace=True, orientation="vertical", height=80)
+        self.xrange_box = oasysgui.widgetBox(general_box, "", addSpace=True, orientation="vertical", height=100)
 
-        oasysgui.lineEdit(self.xrange_box, self, "x_range_min", "X min", labelWidth=220, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.xrange_box, self, "x_range_max", "X max", labelWidth=220, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.xrange_box, self, "x_nbins", "Number of Bins X", labelWidth=220, valueType=int, orientation="horizontal")
+        self.le_x_range_min = oasysgui.lineEdit(self.xrange_box, self, "x_range_min", "X min", labelWidth=220, valueType=float, orientation="horizontal")
+        self.le_x_range_max = oasysgui.lineEdit(self.xrange_box, self, "x_range_max", "X max", labelWidth=220, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(self.xrange_box, self, "x_nbins", "Number of Bins X", callback=self.nx_to_step, labelWidth=220, valueType=int, orientation="horizontal")
+        oasysgui.lineEdit(self.xrange_box, self, "x_pixel", "Pixel Size X", callback=self.step_to_nx, labelWidth=220, valueType=float, orientation="horizontal")
+        
 
         self.y_column = gui.comboBox(general_box, self, "y_column_index", label="Y Column",labelWidth=70,
                                      items=["1: X",
@@ -191,11 +198,12 @@ class CausticWidget(LNLSShadowWidgetC):
                                      sendSelectedValue=False, orientation="horizontal")
 
 
-        self.yrange_box = oasysgui.widgetBox(general_box, "", addSpace=True, orientation="vertical", height=80)
+        self.yrange_box = oasysgui.widgetBox(general_box, "", addSpace=True, orientation="vertical", height=100)
 
-        oasysgui.lineEdit(self.yrange_box, self, "y_range_min", "Y min", labelWidth=220, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.yrange_box, self, "y_range_max", "Y max", labelWidth=220, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.yrange_box, self, "y_nbins", "Number of Bins Y", labelWidth=220, valueType=int, orientation="horizontal")
+        self.le_y_range_min = oasysgui.lineEdit(self.yrange_box, self, "y_range_min", "Y min", labelWidth=220, valueType=float, orientation="horizontal")
+        self.le_y_range_max = oasysgui.lineEdit(self.yrange_box, self, "y_range_max", "Y max", labelWidth=220, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(self.yrange_box, self, "y_nbins", "Number of Bins Y", callback=self.ny_to_step, labelWidth=220, valueType=int, orientation="horizontal")
+        oasysgui.lineEdit(self.yrange_box, self, "y_pixel", "Pixel Size Y", callback=self.step_to_ny, labelWidth=220, valueType=float, orientation="horizontal")
 
         self.weight_box = oasysgui.widgetBox(general_box, "", addSpace=True, orientation="vertical", height=30)
         self.weight_column = gui.comboBox(self.weight_box, self, "weight_column_index", label="Weight", labelWidth=70,
@@ -455,6 +463,46 @@ class CausticWidget(LNLSShadowWidgetC):
 #################################################################################
 #################################################################################
 #################################################################################
+
+    def step_to_nx(self):
+        self.x_nbins = int( (self.x_range_max - self.x_range_min)/self.x_pixel + 1 )
+    
+    def nx_to_step(self):
+        self.x_pixel = round((self.x_range_max - self.x_range_min)/(self.x_nbins - 1), 13)
+        self.x_nbins = int( round((self.x_range_max - self.x_range_min)/self.x_pixel + 1 ))
+
+    def step_to_ny(self):
+        self.y_nbins = int( (self.y_range_max - self.y_range_min)/self.y_pixel + 1 )
+    
+    def ny_to_step(self):
+        self.y_pixel = round((self.y_range_max - self.y_range_min)/(self.y_nbins - 1), 13)
+        self.y_nbins = int( round( (self.y_range_max - self.y_range_min)/self.y_pixel + 1 ))
+        
+    def calc_rangesXY(self):
+        #self.set_beam(beam)
+        #if ShadowCongruence.checkEmptyBeam(self.input_beam):
+        #if(isinstance(self.input_beam, [ShadowBeam])):    
+        if(hasattr(self, 'input_beam')):
+            self.le_x_range_min.setDisabled(self.auto_xy_ranges)
+            self.le_x_range_max.setDisabled(self.auto_xy_ranges)
+            self.le_y_range_min.setDisabled(self.auto_xy_ranges)
+            self.le_y_range_max.setDisabled(self.auto_xy_ranges)
+            
+            self.xy_ranges = self.get_good_ranges(self.input_beam._beam.duplicate(), self.z_range_min, self.z_range_max,
+                                          self.x_column_index+1, self.y_column_index+1)
+            
+            self.x_range_min = round(self.xy_ranges[0], 9)
+            self.x_range_max = round(self.xy_ranges[1], 9)
+            self.y_range_min = round(self.xy_ranges[2], 9)
+            self.y_range_max = round(self.xy_ranges[3], 9)
+
+        else:
+            QtWidgets.QMessageBox.critical(self, "Error",
+                                           "No input beam! Please run the previous widget.",
+                                           QtWidgets.QMessageBox.Ok)
+
+    def calc_pixelsXY(self):
+        pass
 
     def selectOptimizeFile(self):
         self.le_load_filename.setText(oasysgui.selectFileFromDialog(self, self.load_filename, "Open Caustic .h5 File"))
@@ -746,6 +794,28 @@ class CausticWidget(LNLSShadowWidgetC):
         except:
             print('   Mean and RMS values could not be calculated.')
             return (np.nan, np.nan)
+
+    def get_good_ranges(self, beam, zStart, zFin, colh, colv):
+        
+        r_z0h = beam.get_good_range(icol=colh, nolost=1)
+        r_z0v = beam.get_good_range(icol=colv, nolost=1)
+        
+        beam_copy = beam.duplicate()
+        beam_copy.retrace(zStart)
+        r_zStarth = beam_copy.get_good_range(icol=colh, nolost=1)
+        r_zStartv = beam_copy.get_good_range(icol=colv, nolost=1)
+        
+        beam_copy = beam.duplicate()
+        beam_copy.retrace(zFin)
+        r_zFinh = beam_copy.get_good_range(icol=colh, nolost=1)
+        r_zFinv = beam_copy.get_good_range(icol=colv, nolost=1)
+        
+        rh_min = np.min(r_z0h + r_zStarth + r_zFinh)
+        rh_max = np.max(r_z0h + r_zStarth + r_zFinh)
+        rv_min = np.min(r_z0v + r_zStartv + r_zFinv)
+        rv_max = np.max(r_z0v + r_zStartv + r_zFinv)
+    
+        return [rh_min, rh_max, rv_min, rv_max] 
     
     def initialize_hdf5(self, h5_filename, zStart, zFin, nz, zOffset, colh, colv, colref, nbinsh, nbinsv, good_rays, offsets=None):
         with h5py.File(h5_filename, 'w') as f:
