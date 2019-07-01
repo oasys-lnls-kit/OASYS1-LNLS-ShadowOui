@@ -86,6 +86,7 @@ class CausticWidget(LNLSShadowWidgetC):
     plot2D_z_range_minYZ = Setting(0.0)
     plot2D_z_range_maxYZ = Setting(0.0)    
     scale = Setting(0)
+    quick_preview = Setting(1)
     
     def __init__(self):
         super().__init__()
@@ -261,7 +262,9 @@ class CausticWidget(LNLSShadowWidgetC):
 #        gui.button(button_box1, self, "Load and Refresh", callback=self.load_and_refresh, height=28, width=140)
 #        gui.button(button_box2, self, "Save 2D Plots", callback=self.save_2D_plots, height=28, width=140)
 
-        self.options2D_box = oasysgui.widgetBox(tab2, "Read File", addSpace=True, orientation="vertical", height=140)
+        self.options2D_box = oasysgui.widgetBox(tab2, "Read File", addSpace=True, orientation="vertical", height=160)
+
+        gui.checkBox(self.options2D_box, self, "quick_preview", "Plot Quick Preview")
 
         button_file_box = oasysgui.widgetBox(self.options2D_box, "", addSpace=False, orientation="horizontal")
         self.le_load_filename = oasysgui.lineEdit(button_file_box, self, "load_filename", "HDF5 File Name (.h5)", 
@@ -303,9 +306,10 @@ class CausticWidget(LNLSShadowWidgetC):
         button3.setFixedHeight(28)
         button3.setFixedWidth(364)
 
+
         
 #        gui.button(self.options2D_box, self, "Refresh Plots ", callback=self.refresh2D, height=25, width=150)
-        gui.separator(self.options2D_box, 10)
+#        gui.separator(self.options2D_box, 10)
         
         self.options2D_box0 = oasysgui.widgetBox(tab2, "User Units", addSpace=True, orientation="vertical", height=140)
         gui.comboBox(self.options2D_box0, self, "x_units", label="X units", labelWidth=260,
@@ -555,14 +559,26 @@ class CausticWidget(LNLSShadowWidgetC):
                 self.print_date_i
 
                 sys.stdout.write('\nLoading Caustic and Running Analysis...\n')
-                self.outdict = self.plot_shadow_caustic(self.load_filename, self.x_cut_position, self.y_cut_position, self.z_cut_position, 
-                                                        0, 0, scale=self.scale,
-                                                        xrange=[self.plot2D_x_range_min, self.plot2D_x_range_max],
-                                                        yrange=[self.plot2D_y_range_min, self.plot2D_y_range_max],
-                                                        zrange=[self.plot2D_z_range_min, self.plot2D_z_range_max],
-                                                        zrangeXZ=[self.plot2D_z_range_minXZ, self.plot2D_z_range_maxXZ],
-                                                        zrangeYZ=[self.plot2D_z_range_minYZ, self.plot2D_z_range_maxYZ],
-                                                        xunits=self.x_units, yunits=self.y_units, zunits=self.z_units)
+                
+                if(self.quick_preview):
+                    self.plot_quick_preview(self.load_filename,
+                                            scale=self.scale,
+                                            xrange=[self.plot2D_x_range_min, self.plot2D_x_range_max],
+                                            yrange=[self.plot2D_y_range_min, self.plot2D_y_range_max],
+                                            zrange=[self.plot2D_z_range_min, self.plot2D_z_range_max],
+                                            zrangeXZ=[self.plot2D_z_range_minXZ, self.plot2D_z_range_maxXZ],
+                                            zrangeYZ=[self.plot2D_z_range_minYZ, self.plot2D_z_range_maxYZ],
+                                            xunits=self.x_units, yunits=self.y_units, zunits=self.z_units)
+                
+                else:
+                    self.outdict = self.plot_shadow_caustic(self.load_filename, self.x_cut_position, self.y_cut_position, self.z_cut_position, 
+                                                            0, 0, scale=self.scale,
+                                                            xrange=[self.plot2D_x_range_min, self.plot2D_x_range_max],
+                                                            yrange=[self.plot2D_y_range_min, self.plot2D_y_range_max],
+                                                            zrange=[self.plot2D_z_range_min, self.plot2D_z_range_max],
+                                                            zrangeXZ=[self.plot2D_z_range_minXZ, self.plot2D_z_range_maxXZ],
+                                                            zrangeYZ=[self.plot2D_z_range_minYZ, self.plot2D_z_range_maxYZ],
+                                                            xunits=self.x_units, yunits=self.y_units, zunits=self.z_units)
                 self.print_date_f
             except Exception as exception:
                 good_to_plot = 0
@@ -959,15 +975,16 @@ class CausticWidget(LNLSShadowWidgetC):
             zFin = f.attrs['zFin']
             nz = f.attrs['nz']
                     
-            if(plot2D): 
-                xStart = f[dset_names[0]].attrs['xStart']
-                xFin = f[dset_names[0]].attrs['xFin']
-                nx = f[dset_names[0]].attrs['nx']
-                yStart = f[dset_names[0]].attrs['yStart']
-                yFin = f[dset_names[0]].attrs['yFin']
-                ny = f[dset_names[0]].attrs['ny']
-                histoH = np.zeros((nx, nz))
-                histoV = np.zeros((ny, nz))
+            #if(plot2D): 
+            xStart = f[dset_names[0]].attrs['xStart']
+            xFin = f[dset_names[0]].attrs['xFin']
+            nx = f[dset_names[0]].attrs['nx']
+            yStart = f[dset_names[0]].attrs['yStart']
+            yFin = f[dset_names[0]].attrs['yFin']
+            ny = f[dset_names[0]].attrs['ny']
+                
+            histoH = np.zeros((nx, nz))
+            histoV = np.zeros((ny, nz))
             
             z_points = np.linspace(zStart, zFin, nz)
             
@@ -985,10 +1002,10 @@ class CausticWidget(LNLSShadowWidgetC):
                 fwhm_shadow[i,0] = f[dset].attrs['fwhm_h_shadow']    
                 fwhm_shadow[i,1] = f[dset].attrs['fwhm_v_shadow']
                 
-                if(plot2D):
-                    histo2D = np.array(f[dset])
-                    histoH[:,i] = histo2D.sum(axis=1)
-                    histoV[:,i] = histo2D.sum(axis=0)
+                #if(plot2D):
+                histo2D = np.array(f[dset])
+                histoH[:,i] = histo2D.sum(axis=1)
+                histoV[:,i] = histo2D.sum(axis=0)
                     
         #### FIND MINIMUMS AND ITS Z POSITIONS
     
@@ -1045,12 +1062,18 @@ class CausticWidget(LNLSShadowWidgetC):
                    'center_fwhm_h': center_fwhm[0],
                    'center_fwhm_v': center_fwhm[1],
                    'center_fwhm_shadow_h': center_fwhm_shadow[0],
-                   'center_fwhm_shadow_v': center_fwhm_shadow[1]}
+                   'center_fwhm_shadow_v': center_fwhm_shadow[1]}#,
+                   #'histoHZ': histoH,
+                   #'histoVZ': histoV}
         
         if(write_attributes):
             with h5py.File(filename, 'a') as f:
                 for key in list(outdict.keys()):
                     f.attrs[key] = outdict[key]
+                    
+                f.create_dataset('histoXZ', data=histoH, dtype=np.float, compression="gzip")
+                f.create_dataset('histoYZ', data=histoV, dtype=np.float, compression="gzip")
+                
         if(print_minimum):
             print('\n   ****** \n' + '   Z min (rms-hor): {0:.3e}'.format(rms_min_z[0]))
             print('   Z min (rms-vert): {0:.3e}\n   ******'.format(rms_min_z[1]))
@@ -1143,6 +1166,207 @@ class CausticWidget(LNLSShadowWidgetC):
             histo = beam.histo2(col_h=colh, col_v=colv, nbins_h=nbinsh, nbins_v=nbinsv, nolost=1, ref=colref, xrange=xrange, yrange=yrange);
             self.append_dataset_hdf5(filename, data=histo, z=z_points[i], zOffset=zOffset, nz=nz, tag=i+1, t0=t0, ndigits=len(str(nz)))
         self.read_caustic(filename, write_attributes=True)
+    
+    def plot_quick_preview(self, filename, scale=0, 
+                            xrange=[0,0], yrange=[0,0], zrange=[0,0], zrangeXZ=[0,0], zrangeYZ=[0,0], xunits=0, yunits=0, zunits=0):
+    
+        self.print_date_i()     
+        
+        if(xunits==0): 
+            ylabelXZ = 'mm'
+            xlabelXY = 'mm'
+            xf=1.0
+        elif(xunits==1):
+            ylabelXZ = '\u00B5m'
+            xlabelXY = '\u00B5m'
+            xf=1e3
+        elif(xunits==2):
+            ylabelXZ = 'nm'
+            xlabelXY = 'nm'
+            xf=1e6
+
+        if(yunits==0): 
+            ylabelYZ = 'mm'
+            ylabelXY = 'mm'
+            yf=1.0
+        elif(yunits==1):
+            ylabelYZ = '\u00B5m'
+            ylabelXY = '\u00B5m'
+            yf=1e3
+        elif(yunits==2):
+            ylabelYZ = 'nm'
+            ylabelXY = 'nm'
+            yf=1e6
+
+        if(zunits==0): 
+            xlabelYZ = 'm'
+            xlabelXZ = 'm'
+            zf=1e-3
+        if(zunits==1): 
+            xlabelYZ = 'mm'
+            xlabelXZ = 'mm'
+            zf=1.0
+        elif(zunits==2):
+            xlabelYZ = '\u00B5m'
+            xlabelXZ = '\u00B5m'
+            zf=1e3
+        elif(zunits==3):
+            xlabelYZ = 'nm'
+            xlabelXZ = 'nm'
+            zf=1e6
+            
+        with h5py.File(filename, 'r+') as f:
+            
+            zStart = f.attrs['zStart']
+            zFin = f.attrs['zFin']
+            nz = f.attrs['nz']
+            z_points = np.linspace(zStart, zFin, nz)
+
+            dset_names = list(f.keys())
+            xmin = f[dset_names[3]].attrs['xStart'] # [3] is because [0] is a histogram 2D
+            xmax = f[dset_names[3]].attrs['xFin']
+            ymin = f[dset_names[3]].attrs['yStart']
+            ymax = f[dset_names[3]].attrs['yFin']
+            
+            rms_h_array = f.attrs['rms_h_array']
+            rms_v_array = f.attrs['rms_v_array']
+            fwhm_h_array = f.attrs['fwhm_h_array']            
+            fwhm_v_array = f.attrs['fwhm_v_array']        
+            fwhm_shadow_h_array = f.attrs['fwhm_shadow_h_array']            
+            fwhm_shadow_v_array = f.attrs['fwhm_shadow_v_array']
+            histoHZ = np.array(f['histoXZ'])
+            histoVZ = np.array(f['histoYZ'])
+            
+        self.axXZ.clear()
+        self.axXZ.set_xlabel('Z ' + '[' + xlabelXZ + ']')
+        self.axXZ.set_ylabel('X ' + '[' + ylabelXZ + ']')
+        self.axXZ.set_title('Integrated over Y axis')
+        self.axXZ.minorticks_on()
+        self.axXZ.tick_params(which='both', axis='both', direction='out', right=True, top=True)
+
+        self.axYZ.clear()        
+        self.axYZ.set_xlabel('Z ' + '[' + xlabelYZ + ']')
+        self.axYZ.set_ylabel('Y ' + '[' + ylabelYZ + ']')
+        self.axYZ.set_title('Integrated over X axis')
+        self.axYZ.minorticks_on()
+        self.axYZ.tick_params(which='both', axis='both', direction='out', right=True, top=True)
+        
+        self.axXY.clear()
+        #self.axXY.set_xlabel('X ' + '[' + xlabelXY + ']')
+        #self.axXY.set_ylabel('Y ' + '[' + ylabelXY + ']')
+        #self.axXY.set_title('Slice at Z = {0:.6f} '.format(z_to_plot) + xlabelXZ)
+        #self.axXY.minorticks_on()
+        #self.axXY.tick_params(which='both', axis='both', direction='out', right=True, top=True)
+        #self.axXY.hlines(y=y_pts_local[y_cut_idx]*yf, xmin=ranges_to_plot[0]*xf, xmax=ranges_to_plot[1]*xf, alpha=0.4, color='white', linestyle='--')
+        #self.axXY.vlines(x=x_pts_local[x_cut_idx]*xf, ymin=ranges_to_plot[2]*yf, ymax=ranges_to_plot[3]*yf, alpha=0.4, color='white', linestyle='--')
+        
+        if(scale==0):
+
+            self.axXZ.imshow(histoHZ, extent=[zStart*zf, zFin*zf, xmin*xf, xmax*xf], aspect='auto', origin='lower')        
+            self.axYZ.imshow(histoVZ, extent=[zStart*zf, zFin*zf, ymin*yf, ymax*yf], aspect='auto', origin='lower')
+            #self.axXY.imshow(mtx_to_plot, extent=[xmin*xf, xmax*xf, ymin*yf, ymax*yf], aspect='auto', origin='lower')
+            
+        elif(scale==1):
+
+            xc_min_except_0 = np.min(histoHZ[histoHZ>0])
+            histoHZ[histoHZ<=0.0] = xc_min_except_0/2.0
+            self.axXZ.imshow(histoHZ, extent=[zStart*zf, zFin*zf, xmin*xf, xmax*xf], aspect='auto', origin='lower', norm=LogNorm(vmin=xc_min_except_0/2.0, vmax=np.max(histoHZ)))
+    
+            yc_min_except_0 = np.min(histoVZ[histoVZ>0])
+            histoVZ[histoVZ<=0.0] = yc_min_except_0/2.0
+            self.axYZ.imshow(histoVZ, extent=[zStart*zf, zFin*zf, ymin*yf, ymax*yf], aspect='auto', origin='lower', norm=LogNorm(vmin=yc_min_except_0/2.0, vmax=np.max(histoVZ)))
+
+            #xy_min_except_0 = np.min(mtx_to_plot[mtx_to_plot>0])
+            #mtx_to_plot[mtx_to_plot<=0.0] = xy_min_except_0/2.0
+            #self.axXY.imshow(mtx_to_plot, extent=[xmin*xf, xmax*xf, ymin*yf, ymax*yf], aspect='auto', origin='lower', norm=LogNorm(vmin=xy_min_except_0/2.0, vmax=np.max(mtx_to_plot)))
+                        
+        ##############
+        ## 2D Analysis
+        ##############
+        
+#        plt.figure()
+        self.ax11.clear()
+        self.ax11.plot(z_points*zf, fwhm_h_array*xf, '-o', label='internal', alpha=0.6)
+        self.ax11.plot(z_points*zf, fwhm_shadow_h_array*xf, '-o', label='shadow', alpha=0.3)
+        #if not(popt1[0]==0 and popt1[1]==0 and popt1[2]==0): 
+        #    self.ax11.plot(z_points[flXZ]*zf, self.gaussian_beam(z_points[flXZ], popt1[0], popt1[1], popt1[2])*xf, 'C0--', alpha=0.8)
+        #if not(popt3[0]==0 and popt3[1]==0 and popt3[2]==0): 
+        #    self.ax11.plot(z_points[flXZ]*zf, self.gaussian_beam(z_points[flXZ], popt3[0], popt3[1], popt3[2])*xf, 'k--', alpha=0.4)
+        self.ax11.set_xlabel('Z ' + '[' + xlabelXZ + ']')
+        self.ax11.set_ylabel('X FWHM ' + '[' + ylabelXZ + ']')
+        self.ax11.set_title('Integrated over Y axis')
+        self.ax11.minorticks_on()
+        self.ax11.tick_params(which='both', axis='both', direction='in', right=True, top=True)
+        self.ax11.grid(which='both', alpha=0.1)
+        self.ax11.legend(loc='best', fontsize=8)
+
+#        plt.figure()
+        self.ax12.clear()
+        self.ax12.plot(z_points*zf, fwhm_v_array*yf, '-o', label='internal', alpha=0.6)
+        self.ax12.plot(z_points*zf, fwhm_shadow_v_array*yf, '-o', label='shadow', alpha=0.3)
+        #if not(popt4[0]==0 and popt4[1]==0 and popt4[2]==0): 
+        #    self.ax12.plot(z_points[flYZ]*zf, self.gaussian_beam(z_points[flYZ], popt4[0], popt4[1], popt4[2])*yf, 'C0--', alpha=0.8)
+        #if not(popt6[0]==0 and popt6[1]==0 and popt6[2]==0): 
+        #    self.ax12.plot(z_points[flYZ]*zf, self.gaussian_beam(z_points[flYZ], popt6[0], popt6[1], popt6[2])*yf, 'k--', alpha=0.4)
+        self.ax12.set_xlabel('Z ' + '[' + xlabelYZ + ']')
+        self.ax12.set_ylabel('Y FWHM ' + '[' + ylabelYZ + ']')
+        self.ax12.set_title('Integrated over X axis')
+        self.ax12.minorticks_on()
+        self.ax12.tick_params(which='both', axis='both', direction='in', right=True, top=True)
+        self.ax12.grid(which='both', alpha=0.1)
+        self.ax12.legend(loc='best', fontsize=8)
+            
+       
+#        plt.figure()
+        self.ax21.clear()
+        self.ax21.plot(z_points*zf, rms_h_array*xf, '-o', alpha=0.6)
+        #if not(popt2[0]==0 and popt2[1]==0 and popt2[2]==0): 
+        #    self.ax21.plot(z_points[flXZ]*zf, self.gaussian_beam(z_points[flXZ], popt2[0], popt2[1], popt2[2])*xf, 'k--', alpha=0.6)
+        self.ax21.set_xlabel('Z ' + '[' + xlabelXZ + ']')
+        self.ax21.set_ylabel('X RMS ' + '[' + ylabelXZ + ']')
+        self.ax21.set_title('Integrated over Y axis')
+        self.ax21.minorticks_on()
+        self.ax21.tick_params(which='both', axis='both', direction='in', right=True, top=True)
+        self.ax21.grid(which='both', alpha=0.1)
+
+#        plt.figure()
+        self.ax22.clear()
+        self.ax22.plot(z_points*zf, rms_v_array*yf, '-o', alpha=0.6)
+        #if not(popt5[0]==0 and popt5[1]==0 and popt5[2]==0): 
+        #    self.ax22.plot(z_points[flYZ]*zf, self.gaussian_beam(z_points[flYZ], popt5[0], popt5[1], popt5[2])*yf, 'k--', alpha=0.6)
+        self.ax22.set_xlabel('Z ' + '[' + xlabelYZ + ']')
+        self.ax22.set_ylabel('Y RMS ' + '[' + ylabelYZ + ']')
+        self.ax22.set_title('integrated over X axis')
+        self.ax22.minorticks_on()
+        self.ax22.tick_params(which='both', axis='both', direction='in', right=True, top=True)
+        self.ax22.grid(which='both', alpha=0.1)
+
+        if not(xrange[0]==0.0 and xrange[1]==0.0):
+            self.axXZ.set_ylim(xrange[0], xrange[1])
+            #self.axXY.set_xlim(xrange[0], xrange[1])       
+
+        if not(yrange[0]==0.0 and yrange[1]==0.0):
+            self.axYZ.set_ylim(yrange[0], yrange[1])
+            #self.axXY.set_ylim(yrange[0], yrange[1]) 
+            
+        if not(zrange[0]==0.0 and zrange[1]==0.0):
+            self.axXZ.set_xlim(zrange[0], zrange[1])
+            self.axYZ.set_xlim(zrange[0], zrange[1])
+            self.ax11.set_xlim(zrange[0], zrange[1])
+            self.ax12.set_xlim(zrange[0], zrange[1])            
+            self.ax21.set_xlim(zrange[0], zrange[1])
+            self.ax22.set_xlim(zrange[0], zrange[1])
+            
+        self.figureXZ.canvas.draw()
+        self.figureYZ.canvas.draw()
+        self.figureXY.canvas.draw()
+        self.figure11.canvas.draw()
+        self.figure12.canvas.draw()
+        self.figure21.canvas.draw()
+        self.figure22.canvas.draw()
+            
+        self.print_date_f()    
+
     
     def plot_shadow_caustic(self, filename, cut_pos_x=0.0, cut_pos_y=0.0, cut_pos_z=0.0, nx=0, ny=0, scale=0, 
                             xrange=[0,0], yrange=[0,0], zrange=[0,0], zrangeXZ=[0,0], zrangeYZ=[0,0], xunits=0, yunits=0, zunits=0):
