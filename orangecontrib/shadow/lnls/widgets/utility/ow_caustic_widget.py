@@ -495,6 +495,9 @@ class CausticWidget(LNLSShadowWidgetC):
             self.x_range_max = round(self.xy_ranges[1], 9)
             self.y_range_min = round(self.xy_ranges[2], 9)
             self.y_range_max = round(self.xy_ranges[3], 9)
+            
+            self.ny_to_step()
+            self.nx_to_step()
 
         else:
             QtWidgets.QMessageBox.critical(self, "Error",
