@@ -1217,12 +1217,21 @@ class CausticWidget(LNLSShadowWidgetC):
             
         with h5py.File(filename, 'r+') as f:
             
+            dset_names = list(f.keys())
+            
+            if not 'histoXZ' in dset_names:
+                
+                QtWidgets.QMessageBox.critical(self, "Error",
+                                           "This caustic hdf5 file is not compatible with quick preview.",
+                                           QtWidgets.QMessageBox.Ok) 
+                return 0
+            
             zStart = f.attrs['zStart']
             zFin = f.attrs['zFin']
             nz = f.attrs['nz']
             z_points = np.linspace(zStart, zFin, nz)
 
-            dset_names = list(f.keys())
+            
             xmin = f[dset_names[3]].attrs['xStart'] # [3] is because [0] is a histogram 2D
             xmax = f[dset_names[3]].attrs['xFin']
             ymin = f[dset_names[3]].attrs['yStart']

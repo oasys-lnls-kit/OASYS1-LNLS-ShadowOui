@@ -7,13 +7,13 @@ import subprocess
 
 NAME = 'OASYS1-LNLS-ShadowOui'
 
-VERSION = '0.1.2'
+VERSION = '0.1.21'
 ISRELEASED = False
 
 DESCRIPTION = 'WIDGETS DEVELOPED FOR LNLS TO EXTEND SHADOWOUI FUNCTIONALITIES'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.txt')
 LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Bernd Christian Meyer, Sergio Augusto Lordano Luiz, Artur Clarindo Pinto and Luca Rebuffi'
+AUTHOR = 'Sergio Augusto Lordano Luiz, Artur Clarindo Pinto, Bernd Christian Meyer'
 AUTHOR_EMAIL = 'artur.pinto@lnls.br'
 URL = 'http://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui'
 DOWNLOAD_URL = 'http://github.com/oasys-lnls-kit/OASYS1-LNLS-ShadowOui'
