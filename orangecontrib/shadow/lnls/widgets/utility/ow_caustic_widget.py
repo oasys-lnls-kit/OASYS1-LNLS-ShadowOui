@@ -1432,6 +1432,7 @@ class CausticWidget(LNLSShadowWidgetC):
             nz = f.attrs['nz']
             z_points = np.linspace(zStart, zFin, nz)
             dset_names = list(f.keys())
+            del dset_names[0:2] # bug correction for new caustic
             z_to_plot = z_points[np.abs(z_points - cut_pos_z/zf).argmin()]
             
             #####################
