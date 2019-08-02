@@ -627,7 +627,7 @@ class FluxWidget(LNLSShadowWidget):
             self.plot_canvas5.addImage(self.acc_dict["PDF"].transpose(),origin=(numpy.min(self.En_coord),1e3*numpy.min(self.acc_dict["Psi"])),
                                        scale=((numpy.max(self.En_coord)-numpy.min(self.En_coord))/self.number_of_bins,
                                               1e3*(numpy.max(self.acc_dict["Psi"])-numpy.min(self.acc_dict["Psi"]))/len(self.acc_dict["PDF"][0,:])))
-            self.plot_canvas5.addCurve(self.En_coord,1e3*self.acc_dict["rwhm"],color='black',linewidht=1.5,legend='right')
+            self.plot_canvas5.addCurve(self.En_coord,1e3*self.acc_dict["rwhm"],color='black',linewidth=1.5,legend='right')
             self.plot_canvas5.addCurve(self.En_coord,1e3*self.acc_dict["lwhm"],color='black',linewidth=1.5,legend='left')
             self.plot_canvas5.addCurve([numpy.min(self.En_coord),numpy.max(self.En_coord)],
                                        [-self.lim_i_z*1e3,-self.lim_i_z*1e3],color='gray',linewidth=1.5,legend='i_z')
