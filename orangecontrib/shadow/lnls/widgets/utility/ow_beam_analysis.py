@@ -534,7 +534,7 @@ class PlotXY(AutomaticElement):
         beam_to_plot = self.input_beam._beam
         
         #Collect beam info       
-        info_beam = beam_to_plot.histo1(1)
+        info_beam = beam_to_plot.histo1(1, nolost=1)
         self.inten = ("{:.2f}".format(info_beam['intensity']))
         self.nrays = str(int(info_beam['nrays']))
         self.grays = str(int(info_beam['good_rays']))
