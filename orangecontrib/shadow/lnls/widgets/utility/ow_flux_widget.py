@@ -31,6 +31,7 @@ try:
     from scipy.integrate import simps
     from scipy.special import kv
     from scipy.integrate import quad
+    import scipy.constants as codata
 except ImportError:
     raise ImportError('FLUX needs module scipy')
     
@@ -61,6 +62,8 @@ class FluxWidget(LNLSShadowWidget):
     plot_canvas3=None
     plot_canvas4=None    
     input_beam=None
+    
+    retrive_source_parameters = Setting(False)
 
     source_type=Setting(0)
     storage_energy=Setting(3.0)
@@ -108,6 +111,8 @@ class FluxWidget(LNLSShadowWidget):
         
         ############### CONTROL AREA #####################        
         self.controlArea.setFixedWidth(self.CONTROL_AREA_WIDTH+8)
+        
+        gui.checkBox(self.general_options_box, self, 'retrive_source_parameters', 'Get Source Parameters', callback=self.get_parameters_from_source)
         
         gui.button(self.controlArea, self, "Refresh", callback=self.plot_results, height=35,width=100)
         gui.separator(self.controlArea, 10)
@@ -166,7 +171,7 @@ class FluxWidget(LNLSShadowWidget):
             ### Machine Paremeters ###
         self.kind_of_source_box_1_3 = oasysgui.widgetBox(self.kind_of_source_box_1, "", addSpace=True, orientation="vertical", height=400)
 
-        self.le_st_energy = oasysgui.lineEdit(self.kind_of_source_box_1_3, self, "storage_energy", "Energy [GeV]",
+        self.le_st_energy_und = oasysgui.lineEdit(self.kind_of_source_box_1_3, self, "storage_energy", "Energy [GeV]",
                            labelWidth=260, valueType=float, orientation="horizontal")
     
         self.le_es = oasysgui.lineEdit(self.kind_of_source_box_1_3, self, "en_spread", "Energy Spread",
@@ -398,7 +403,7 @@ class FluxWidget(LNLSShadowWidget):
         self.kind_of_source_box_1_2.setVisible(self.source_type==1)
         self.kind_of_source_box_1_3.setVisible(self.source_type==2)
         self.kind_of_source_box_1_1b.setVisible(self.source_type<2)
-        self.kind_of_source_box_1_1c.setVisible(self.use_vert_acc==1)   
+        self.kind_of_source_box_1_1c.setVisible(self.use_vert_acc==1 and self.source_type<2)
       
     
     ### Calculates Wiggler Magnetic Filed from a given K-Value
@@ -434,10 +439,73 @@ class FluxWidget(LNLSShadowWidget):
                 QtWidgets.QMessageBox.critical(self, "Error",
                                            "Data not displayable: No good rays, bad content, bad limits or axes",
                                            QtWidgets.QMessageBox.Ok)
-    
+                
+
+    ### Get Source Info - For Bending Magnet, Geometrical Source and Undulator Gaussian ###
+    def get_parameters_from_source(self):
+        if(hasattr(self, 'input_beam')):
+            try:
+                Source = self.input_beam.history[0]._shadow_source_end.src
+                
+                if not (Source.HDIV1==0 or Source.HDIV2==0 or Source.VDIV1==0 or Source.VDIV2==0):
+                    self.lim_i_x = Source.HDIV1
+                    self.lim_f_x = Source.HDIV2
+                    self.lim_i_z = Source.VDIV1
+                    self.lim_f_z = Source.VDIV2
+                    self.mxa.setDisabled(self.retrive_source_parameters)
+                    self.pxa.setDisabled(self.retrive_source_parameters)
+                    self.mxz.setDisabled(self.retrive_source_parameters)
+                    self.pxz.setDisabled(self.retrive_source_parameters)
+                
+                # Bending Magnet
+                if self.source_type == 0:
+                    self.storage_energy = Source.BENER
+                    self.le_st_energy.setDisabled(self.retrive_source_parameters)
+                    self.mag_field = (1e9/codata.c)*self.storage_energy/Source.R_MAGNET
+                    self.le_mag_f.setDisabled(self.retrive_source_parameters)
+                    self.ebeam_vert_sigma = Source.EPSI_Z/Source.SIGMAZ
+                    self.ebeam_divz.setDisabled(self.retrive_source_parameters)
+                    
+                # Wiggler - Beam does not propagate parameters
+                elif self.source_type == 1:
+                    self.storage_energy = Source.BENER
+                    self.le_st_energy.setDisabled(self.retrive_source_parameters)
+#                    self.mag_field = 
+#                    self.k_wiggler = 
+#                    self.n_periods =
+#                    self.w_period =
+                    self.ebeam_vert_sigma = Source.EPSI_Z/Source.SIGMAZ
+                    self.ebeam_divz.setDisabled(self.retrive_source_parameters)
+                    
+                #Geometrical Source or Undulator Gaussian
+                elif self.source_type == 2:
+                    self.sigma_x = Source.SIGMAX
+                    self.le_sx.setDisabled(self.retrive_source_parameters)
+                    self.sigma_z = Source.SIGMAZ
+                    self.le_sz.setDisabled(self.retrive_source_parameters)
+                    self.div_x = Source.SIGDIX
+                    self.le_emx.setDisabled(self.retrive_source_parameters)
+                    self.div_z = Source.SIGDIZ
+                    self.le_emz.setDisabled(self.retrive_source_parameters)
+                    
+                    self.c_En = (Source.PH1 + Source.PH2)/2
+                    self.le_ce.setDisabled(self.retrive_source_parameters)
+                    self.En_K_und()
+                    self.le_kv.setDisabled(self.retrive_source_parameters)
+            except:
+                QtWidgets.QMessageBox.critical(self, "Error",
+                                               "Unable to retrive source data.",
+                                               QtWidgets.QMessageBox.Ok)
+        else:
+            QtWidgets.QMessageBox.critical(self, "Error",
+                                           "No input beam! Please run the previous widget.",
+                                           QtWidgets.QMessageBox.Ok)
+
     ### Call plot functions ###
     def plot_results(self):
-
+        
+        if self.retrive_source_parameters:
+            self.get_parameters_from_source()
 
         try:
             plotted = False
