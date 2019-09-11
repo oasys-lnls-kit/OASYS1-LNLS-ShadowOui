@@ -344,15 +344,15 @@ class PlotXY(AutomaticElement):
                      items=["Linear", "Logarithmic"], sendSelectedValue=False, orientation="horizontal")
 
         gui.comboBox(plot_control_box, self, "textA", label="Text 1", labelWidth=250,
-                     items=["None", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "Title"], 
+                     items=["None", "Title", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "Slice Maximum", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "FIT Maximum"], 
                      sendSelectedValue=False, orientation="horizontal")
 
         gui.comboBox(plot_control_box, self, "textB", label="Text 2", labelWidth=250,
-                     items=["None", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "Title"], 
+                     items=["None", "Title", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "Slice Maximum", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "FIT Maximum"], 
                      sendSelectedValue=False, orientation="horizontal")
 
         gui.comboBox(plot_control_box, self, "textC", label="Text 3", labelWidth=250,
-                     items=["None", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "Title"], 
+                     items=["None", "Title", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "Slice Maximum", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "FIT Maximum"], 
                      sendSelectedValue=False, orientation="horizontal")
         
         oasysgui.lineEdit(plot_control_box, self, "plottitle", "Title / Description (< 40 char)", controlWidth=180,
@@ -1286,64 +1286,74 @@ class PlotXY(AutomaticElement):
         hor_label = 'X'
         vert_label = 'Y'
         
+        #TITLE
+        if(len(self.plottitle) <= 20):
+            text1 = self.plottitle
+        else:
+            text1 = self.plottitle[:20] + '\n' + self.plottitle[20:41]
+        
         # MEAN COORDINATES    
-        text1  = hor_label+' MEAN = {0:.3f}\n'.format(x_mean)
-        text1 += vert_label+' MEAN = {0:.3f}\n\n'.format(z_mean)
+        text2  = hor_label+' MEAN = {0:.3f}\n'.format(x_mean)
+        text2 += vert_label+' MEAN = {0:.3f}\n\n'.format(z_mean)
         
         # PEAK COORDINATES
-        text2  = hor_label+' PEAK = {0:.3f}\n'.format(x_axis[zmax[0]])
-        text2 += vert_label+' PEAK = {0:.3f}\n'.format(z_axis[xmax[0]])
+        text3  = hor_label+' PEAK = {0:.3f}\n'.format(x_axis[zmax[0]])
+        text3 += vert_label+' PEAK = {0:.3f}\n'.format(z_axis[xmax[0]])
 
         # DATA RANGE
-        text3  = hor_label+' RANGE = {0:.3f}\n'.format(x_axis[-1] - x_axis[0])
-        text3 += vert_label+' RANGE = {0:.3f}\n'.format(z_axis[-1] - z_axis[0])
+        text4  = hor_label+' RANGE = {0:.3f}\n'.format(x_axis[-1] - x_axis[0])
+        text4 += vert_label+' RANGE = {0:.3f}\n'.format(z_axis[-1] - z_axis[0])
 
         # CUT FWHM
-        text4  = hor_label+' FWHM = {0:.3f}\n'.format(x_cut_fwhm[0])
-        text4 += vert_label+' FWHM = {0:.3f}\n'.format(z_cut_fwhm[0])
+        text5  = hor_label+' FWHM = {0:.3f}\n'.format(x_cut_fwhm[0])
+        text5 += vert_label+' FWHM = {0:.3f}\n'.format(z_cut_fwhm[0])
         
         # CUT RMS
-        text5  = hor_label+' RMS = {0:.3f}\n'.format(x_cut_rms)
-        text5 += vert_label+' RMS = {0:.3f}\n'.format(z_cut_rms)
+        text6  = hor_label+' RMS = {0:.3f}\n'.format(x_cut_rms)
+        text6 += vert_label+' RMS = {0:.3f}\n'.format(z_cut_rms)
         
-        text6 = ''; text7 = ''; text8 = ''; text9 = ''; # IF FIT IS DISABLED
+        # CUT MAXIMUM
+        text7  = hor_label+' MAX = {0:.3f}\n'.format(numpy.max(x_cut))
+        text7 += vert_label+' MAX = {0:.3f}\n'.format(numpy.max(z_cut))
+        
+        text8 = ''; text9 = ''; text10 = ''; text11 = ''; text12 = ''; # IF FIT IS DISABLED
         
         if(fitType != 0):
             
             # MEAN COORDINATES
-            text6  = hor_label+' MEAN = {0:.3f}\n'.format(numpy.average(x_axis, weights=x_cut_fit))
-            text6 += vert_label+' MEAN = {0:.3f}\n'.format(numpy.average(z_axis, weights=z_cut_fit))
+            text8  = hor_label+' MEAN = {0:.3f}\n'.format(numpy.average(x_axis, weights=x_cut_fit))
+            text8 += vert_label+' MEAN = {0:.3f}\n'.format(numpy.average(z_axis, weights=z_cut_fit))
             
             # PEAK COORDINATES
-            text7  = hor_label+' PEAK = {0:.3f}\n'.format(x_axis[numpy.abs(x_cut_fit - numpy.max(x_cut_fit)).argmin()])
-            text7 += vert_label+' PEAK = {0:.3f}\n'.format(z_axis[numpy.abs(z_cut_fit - numpy.max(z_cut_fit)).argmin()])
+            text9  = hor_label+' PEAK = {0:.3f}\n'.format(x_axis[numpy.abs(x_cut_fit - numpy.max(x_cut_fit)).argmin()])
+            text9 += vert_label+' PEAK = {0:.3f}\n'.format(z_axis[numpy.abs(z_cut_fit - numpy.max(z_cut_fit)).argmin()])
             
             # CUT FIT FWHM
-            text8  = hor_label+' FWHM = {0:.3f}\n'.format(x_cut_fit_fwhm[0])
-            text8 += vert_label+' FWHM = {0:.3f}\n'.format(z_cut_fit_fwhm[0])
+            text10  = hor_label+' FWHM = {0:.3f}\n'.format(x_cut_fit_fwhm[0])
+            text10 += vert_label+' FWHM = {0:.3f}\n'.format(z_cut_fit_fwhm[0])
             
             # CUT FIT RMS
-            text9  = hor_label+' RMS = {0:.3f}\n'.format(x_cut_fit_rms)
-            text9 += vert_label+' RMS = {0:.3f}\n'.format(z_cut_fit_rms)
-        
-        #TITLE
-        if(len(self.plottitle) <= 20):
-            text10 = self.plottitle
-        else:
-            text10 = self.plottitle[:20] + '\n' + self.plottitle[20:41]
+            text11  = hor_label+' RMS = {0:.3f}\n'.format(x_cut_fit_rms)
+            text11 += vert_label+' RMS = {0:.3f}\n'.format(z_cut_fit_rms)
+            
+            # CUT FIT MAXIMUM
+            text12  = hor_label+' MAX = {0:.3f}\n'.format(numpy.max(x_cut_fit))
+            text12 += vert_label+' MAX = {0:.3f}\n'.format(numpy.max(z_cut_fit))
                 
         def text(x):
             return {
-                1 : [text1, 'C0'],
+                1 : [text1, 'black'],
                 2 : [text2, 'C0'],
                 3 : [text3, 'C0'],
                 4 : [text4, 'C0'],
                 5 : [text5, 'C0'],
-                6 : [text6, 'C1'],
-                7 : [text7, 'C1'],
+                6 : [text6, 'C0'],
+                7 : [text7, 'C0'],
                 8 : [text8, 'C1'],
                 9 : [text9, 'C1'],
-                10 : [text10, 'black']
+                10 : [text10, 'C1'],
+                11 : [text11, 'C1'],
+                12 : [text12, 'C1']
             }.get(x, ['', ''])       
         
         [text_box1, color1] = text(textA)
