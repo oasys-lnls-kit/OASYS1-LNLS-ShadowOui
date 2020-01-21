@@ -675,10 +675,15 @@ class CausticWidget(LNLSShadowWidgetC):
             
         try:
             import mayavi.mlab
+            import platform
             
             mayavi_path = os.path.split(__file__)[0] 
-            command_str = "gnome-terminal -e 'bash -c \" python {0} -f {1} ; exec bash\"'".format(os.path.join(mayavi_path, 'volume_slicer_mayavi.py'), os.path.join(os.getcwd(), self.load_filename))
-            os.system(command_str)            
+            
+            if platform.system() == 'Linux':
+                command_str = "gnome-terminal -e 'bash -c \" python {0} -f {1} ; exec bash\"'".format(os.path.join(mayavi_path, 'volume_slicer_mayavi.py'), os.path.join(os.getcwd(), self.load_filename))
+            if platform.system() == 'Windows':
+                command_str = "cmd /c python {0} -f {1} ".format(os.path.join(mayavi_path, 'volume_slicer_mayavi.py'), os.path.join(os.getcwd(), self.load_filename))
+            os.system(command_str)         
             
         except ImportError:
             raise ImportError("For 3D visualization, please 'pip install mayavi' in the oasys environment")

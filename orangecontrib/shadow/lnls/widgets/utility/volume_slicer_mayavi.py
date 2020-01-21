@@ -6,6 +6,7 @@
 # License: BSD Style.
 
 import numpy as np
+import h5py
 import optparse
 from traits.api import HasTraits, Instance, Array, \
     on_trait_change
@@ -18,7 +19,7 @@ from mayavi import mlab
 from mayavi.core.api import PipelineBase, Source
 from mayavi.core.ui.api import SceneEditor, MayaviScene, \
                                 MlabSceneModel                              
-import h5py
+
 
 
 
@@ -282,7 +283,7 @@ if __name__=='__main__':
         # find maximum ranges
         #####################
         xy_range = np.zeros((len(dset_names), 4))
-        dset = dset_names[0]
+        dset = dset_names[2]
         xS, xF, nx =  f[dset].attrs['xStart'], f[dset].attrs['xFin'], f[dset].attrs['nx']
         yS, yF, ny =  f[dset].attrs['yStart'], f[dset].attrs['yFin'], f[dset].attrs['ny']
         
@@ -290,9 +291,9 @@ if __name__=='__main__':
         y_array = np.linspace(yS, yF, ny)[::-1]
         z_array = np.linspace(zStart, zFin, nz)
         
-        for i in range(len(dset_names)-1):
+        for i in range(len(dset_names)-2):
                         
-            dset = dset_names[i]
+            dset = dset_names[i+2]
             mtx = np.array(f[dset])
             mtx = mtx[:,::-1][::-1,:]            
             
