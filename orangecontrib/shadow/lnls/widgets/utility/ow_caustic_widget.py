@@ -651,7 +651,8 @@ class CausticWidget(LNLSShadowWidgetC):
     def save_2D_plots(self):
 #        sys.stdout = EmittingStream(textWritten=self.writeStdOut)
         filename, ext = os.path.splitext(self.load_filename)
-        np.savetxt(filename + '_' + self.time_string + '.txt', [self.outtext], fmt="%s")
+        if not(self.plot_quick_preview):
+            np.savetxt(filename + '_' + self.time_string + '.txt', [self.outtext], fmt="%s")
         
         self.figureXZ.savefig(filename + '_XZ.png', dpi=300)
         self.figureYZ.savefig(filename + '_YZ.png', dpi=300)
@@ -1253,6 +1254,8 @@ class CausticWidget(LNLSShadowWidgetC):
             histoHZ = np.array(f['histoXZ'])
             histoVZ = np.array(f['histoYZ'])
             
+            self.time_string = f.attrs['end time']
+            
         self.axXZ.clear()
         self.axXZ.set_xlabel('Z ' + '[' + xlabelXZ + ']')
         self.axXZ.set_ylabel('X ' + '[' + ylabelXZ + ']')
@@ -1441,6 +1444,7 @@ class CausticWidget(LNLSShadowWidgetC):
             dset_names = list(f.keys())
             del dset_names[0:2] # bug correction for new caustic
             z_to_plot = z_points[np.abs(z_points - cut_pos_z/zf).argmin()]
+            self.time_string = f.attrs['end time']
             
             #####################
             # find maximum ranges
@@ -1625,7 +1629,7 @@ class CausticWidget(LNLSShadowWidgetC):
         self.outtext += "Betas: (cut-FWHM, histo-FWHM, cut-RMS) = {0:.6f}, {1:.6f}, {2:.6f} {3}\n".format(outdict["popt_fwhm_y_cut"][2], outdict["popt_fwhm_y_histo"][2], outdict["popt_rms_y_cut"][2], xlabelYZ)
         
 
-        self.time_string = time.strftime("%Y-%m-%d-%Hh-%Mm-%Ss", time.localtime())
+        #self.time_string = time.strftime("%Y-%m-%d-%Hh-%Mm-%Ss", time.localtime())
         sys.stdout.write(self.outtext)
         self.print_date_f()        
 
