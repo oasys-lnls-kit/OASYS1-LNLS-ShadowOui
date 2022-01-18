@@ -1342,6 +1342,7 @@ class PlotXY(AutomaticElement):
                 
         def text(x):
             return {
+                0 : ['', 'black'],
                 1 : [text1, 'black'],
                 2 : [text2, 'C0'],
                 3 : [text3, 'C0'],
