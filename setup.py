@@ -7,7 +7,7 @@ import subprocess
 
 NAME = 'OASYS1-LNLS-ShadowOui'
 
-VERSION = '0.1.27'
+VERSION = '0.2.0'
 ISRELEASED = False
 
 DESCRIPTION = 'WIDGETS DEVELOPED FOR LNLS TO EXTEND SHADOWOUI FUNCTIONALITIES'
@@ -45,6 +45,7 @@ INSTALL_REQUIRES = (
                     'setuptools',
                     'OASYS1-ShadowOui',
                     'OASYS1-SRW',
+                    'optlnls',
                    )
 
 if len({'develop', 'release', 'bdist_egg', 'bdist_rpm', 'bdist_wininst',
