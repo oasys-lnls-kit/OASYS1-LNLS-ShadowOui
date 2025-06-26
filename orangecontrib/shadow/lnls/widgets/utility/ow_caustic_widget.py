@@ -871,7 +871,7 @@ class CausticWidget(LNLSShadowWidgetC):
 #        
 #        with h5py.File(filename, 'a') as f:
 #            dset = f.create_dataset('step_{0:0{ndigits}d}'.format(tag, ndigits=ndigits),
-#                                    data=np.array(data['histogram'], dtype=np.float), compression="gzip")
+#                                    data=np.array(data['histogram'], dtype=float), compression="gzip")
 #            dset.attrs['z'] = z + zOffset
 #            dset.attrs['xStart'] = data['bin_h_center'].min()
 #            dset.attrs['xFin'] = data['bin_h_center'].max()
@@ -931,7 +931,7 @@ class CausticWidget(LNLSShadowWidgetC):
         
         with h5py.File(filename, 'a') as f:
             dset = f.create_dataset('step_{0:0{ndigits}d}'.format(tag, ndigits=ndigits),
-                                    data=np.array(data['histogram'], dtype=np.float), compression="gzip")
+                                    data=np.array(data['histogram'], dtype=float), compression="gzip")
             dset.attrs['z'] = z + zOffset
             dset.attrs['xStart'] = data['bin_h_center'].min()
             dset.attrs['xFin'] = data['bin_h_center'].max()
@@ -1079,8 +1079,8 @@ class CausticWidget(LNLSShadowWidgetC):
                 for key in list(outdict.keys()):
                     f.attrs[key] = outdict[key]
                     
-                f.create_dataset('histoXZ', data=histoH, dtype=np.float, compression="gzip")
-                f.create_dataset('histoYZ', data=histoV, dtype=np.float, compression="gzip")
+                f.create_dataset('histoXZ', data=histoH, dtype=float, compression="gzip")
+                f.create_dataset('histoYZ', data=histoV, dtype=float, compression="gzip")
                 
         if(print_minimum):
             print('\n   ****** \n' + '   Z min (rms-hor): {0:.3e}'.format(rms_min_z[0]))
