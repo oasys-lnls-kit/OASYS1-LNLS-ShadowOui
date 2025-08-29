@@ -43,7 +43,7 @@ class PlotXY(AutomaticElement):
     category = "Display Data Tools"
     keywords = ["data", "file", "load", "read"]
 
-    inputs = [("Input Beam", ShadowBeam, "setBeam")]
+    inputs = [("Input Beam", object, "setBeam")]
 
     IMAGE_WIDTH = 640
     IMAGE_HEIGHT = 640
@@ -485,7 +485,9 @@ class PlotXY(AutomaticElement):
             beam3.rays[:, 0:3] /= input_beam.workspace_units_to_m
             beam3.rays[:, 12] /= input_beam.workspace_units_to_m
             output_beam3 = ShadowBeam(beam=beam3, number_of_rays=input_beam.shadow_data.get_number_of_rays())
-        return output_beam3
+            return output_beam3
+        
+        return None
 
     def save_fig(self):
         self.figure.savefig(self.output_filename, dpi=200)
@@ -771,16 +773,21 @@ class PlotXY(AutomaticElement):
         return x, y, auto_x_title, auto_y_title, xum, yum
 
     def setBeam(self, beam):
-        if ShadowCongruence.checkEmptyBeam(beam):
-            if ShadowCongruence.checkGoodBeam(beam):
-                self.input_beam = beam
+        beam = self.fix_beam(beam)
 
-                if self.is_automatic_run:
-                    self.plot_results()
-            else:
-                QtWidgets.QMessageBox.critical(self, "Error",
-                                           "Data not displayable: No good rays, bad content, bad limits or axes",
-                                           QtWidgets.QMessageBox.Ok)
+        if beam:
+            if ShadowCongruence.checkEmptyBeam(beam):
+                if ShadowCongruence.checkGoodBeam(beam):
+                    self.input_beam = beam
+
+                    if self.is_automatic_run:
+                        self.plot_results()
+                else:
+                    QtWidgets.QMessageBox.critical(self, "Error",
+                                            "Data not displayable: No good rays, bad content, bad limits or axes",
+                                            QtWidgets.QMessageBox.Ok)
+        else:
+            print("No valid beam data available")
 
 
     def writeStdOut(self, text):
