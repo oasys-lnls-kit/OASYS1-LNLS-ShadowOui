@@ -479,12 +479,12 @@ class PlotXY(AutomaticElement):
             return input_beam
         
         elif isinstance(input_beam, ShadowData):
-            beam4 = input_beam.shadow_data.beam
-            beam3 = Shadow.Beam(N=input_beam.shadow_data.get_number_of_rays())
+            beam4 = input_beam.beam
+            beam3 = Shadow.Beam(N=input_beam.get_number_of_rays())
             beam3.rays = beam4.rays.copy()
-            beam3.rays[:, 0:3] /= input_beam.workspace_units_to_m
-            beam3.rays[:, 12] /= input_beam.workspace_units_to_m
-            output_beam3 = ShadowBeam(beam=beam3, number_of_rays=input_beam.shadow_data.get_number_of_rays())
+            beam3.rays[:, 0:3] /= self.workspace_units_to_m
+            beam3.rays[:, 12] /= self.workspace_units_to_m
+            output_beam3 = ShadowBeam(beam=beam3, number_of_rays=input_beam.get_number_of_rays())
             return output_beam3
         
         return None
