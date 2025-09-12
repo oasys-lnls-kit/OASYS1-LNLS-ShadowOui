@@ -496,6 +496,9 @@ class CausticWidget(LNLSShadowWidgetC):
                 self.xy_ranges = self.get_good_ranges(self.input_beam._beam.duplicate(), 
                                                       self.z_range_min, self.z_range_max,
                                                       self.x_column_index+1, self.y_column_index+1)
+                
+            else:
+                self.xy_ranges = [self.x_range_min, self.x_range_max, self.y_range_min, self.y_range_max]
             
             self.x_range_min = round(self.xy_ranges[0], 9)
             self.x_range_max = round(self.xy_ranges[1], 9)
