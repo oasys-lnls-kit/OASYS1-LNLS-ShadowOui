@@ -526,17 +526,26 @@ class CausticWidget(LNLSShadowWidgetC):
         except:
             pass
         
+        if self.auto_xy_ranges:
+            self.calc_rangesXY()
+        
     def step_to_nz(self):
         try:
             self.nz = int( (self.z_range_max - self.z_range_min)/self.z_step + 1 )
         except:
             pass
+        
+        if self.auto_xy_ranges:
+            self.calc_rangesXY()
 
     def nz_to_step(self):
         try:
             self.z_step = (self.z_range_max - self.z_range_min)/(self.nz - 1) 
         except:
             pass
+        
+        if self.auto_xy_ranges:
+            self.calc_rangesXY()
 
     def load_and_refresh(self):
         sys.stdout = EmittingStream(textWritten=self.writeStdOut)
