@@ -2,6 +2,9 @@ import copy
 import sys
 import time
 
+from orangecontrib.shadow.lnls.widgets.utility.plot import plot_beam
+
+from matplotlib.patches import Shadow
 import numpy
 from PyQt5 import QtGui, QtWidgets
 from orangewidget import gui
@@ -80,12 +83,12 @@ class PlotXY(AutomaticElement):
     number_of_binsY=Setting(100)
     x_cut_pos=Setting(0.0)
     y_cut_pos=Setting(0.0)    
-#    invertXY = Setting(0)
     fitType = Setting(0)
     cut = Setting(0)
     textA = Setting(0)
     textB = Setting(0)
     textC = Setting(0)
+    textD = Setting(0)
     invertXY = Setting(0)
     scale = Setting(0)
     hor_label = Setting('')
@@ -99,7 +102,11 @@ class PlotXY(AutomaticElement):
     fwhm_oversampling = Setting(200.0)
     fwhm_threshold = Setting(0.5)
     
-    plot_zeroPadding = Setting(0)
+    plot_zeroPadding_z = Setting(0) 
+    plot_zeroPadding_x = Setting(0)
+
+    units_definition = Setting(0) #0: mm, 1: um, 2: nm
+
     gaussian_filter = Setting(0)
     
     inten=Setting(0)
@@ -326,6 +333,9 @@ class PlotXY(AutomaticElement):
                      items=["1D histograms", "Cut at 0", "Cut at peak", "Cut at mean value", "Cut at position"], 
                      sendSelectedValue=False, orientation="horizontal")
         
+        gui.comboBox(plot_control_box, self, "units_definition", label="Units", labelWidth=250,
+                     items=["mm", "um", "nm"], sendSelectedValue=False, orientation="horizontal")
+        
         self.slice_box = oasysgui.widgetBox(plot_control_box, "", addSpace=False, orientation="vertical", height=50)
 #        self.slice_box_empty = oasysgui.widgetBox(plot_control_box, "", addSpace=False, orientation="vertical", height=100)
 
@@ -354,6 +364,10 @@ class PlotXY(AutomaticElement):
         gui.comboBox(plot_control_box, self, "textC", label="Text 3", labelWidth=250,
                      items=["None", "Title", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "Slice Maximum", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "FIT Maximum"], 
                      sendSelectedValue=False, orientation="horizontal")
+
+        gui.comboBox(plot_control_box, self, "textD", label="Text 4", labelWidth=250,
+                     items=["None", "Title", "Mean Values", "Peak Values", "Data Range", "Slice FWHM", "Slice RMS", "Slice Maximum", "FIT Mean", "FIT Peak", "FIT FWHM", "FIT RMS", "FIT Maximum"],
+                     sendSelectedValue=False, orientation="horizontal")
         
         oasysgui.lineEdit(plot_control_box, self, "plottitle", "Title / Description (< 40 char)", controlWidth=180,
                           labelWidth=250, valueType=str, orientation="horizontal")
@@ -380,8 +394,12 @@ class PlotXY(AutomaticElement):
         oasysgui.lineEdit(adv_box, self, "fwhm_oversampling", "Oversampling factor for FWHM (>1)",
                           labelWidth=250, valueType=float, orientation="horizontal")
         
-        oasysgui.lineEdit(adv_box, self, "plot_zeroPadding", "Large limits - zero padding (>0)",
+        oasysgui.lineEdit(adv_box, self, "plot_zeroPadding_z", "Zero padding Z (>0)",
                           labelWidth=250, valueType=float, orientation="horizontal")
+        
+        oasysgui.lineEdit(adv_box, self, "plot_zeroPadding_x", "Zero padding X (>0)",
+                          labelWidth=250, valueType=float, orientation="horizontal")
+        
         
         oasysgui.lineEdit(adv_box, self, "gaussian_filter", "Smooth factor - gaussian filter (>0)",
                           labelWidth=250, valueType=float, orientation="horizontal")   
@@ -448,9 +466,7 @@ class PlotXY(AutomaticElement):
         self.image_box.layout().addWidget(self.plot_canvas)
         
         self.figure.set_size_inches((5,5))
-        
-#        fontsize=12
-       
+               
         self.space = 0.02
         self.LTborder = 0.04
         self.RBborder = 0.15
@@ -466,7 +482,7 @@ class PlotXY(AutomaticElement):
         self.axX  = self.figure.add_axes(rect_X, sharex=self.ax2D)
         self.axY  = self.figure.add_axes(rect_Y, sharey=self.ax2D)
         self.axT  = self.figure.add_axes(rect_T)
-        
+
 
     def save_fig(self):
         self.figure.savefig(self.output_filename, dpi=200)
@@ -519,102 +535,36 @@ class PlotXY(AutomaticElement):
         self.slice_box.setVisible(self.cut == 4)
 #        self.slice_box_empty.setVisible(self.y_range != 4)
 
-    def replace_fig(self, beam, var_x, var_y,  title, xtitle, ytitle, xrange, yrange, nbins, nolost, xum, yum):
-
-#        os.write(1, b'### Got here A ### \n')      
-        beam  = self.read_shadow_beam(beam=beam)                                                               
-#        os.write(1, b'### Got here B ### \n')
-        
-        self.analyze_beam(beam, invertXY = 0, overSampling = self.fwhm_oversampling,
-                           cut=self.cut, textA=self.textA, textB=self.textB, textC=self.textC, fitType=self.fitType,
-                           xlabel=self.get_titles()[2],ylabel=self.get_titles()[3], scale=self.scale)
-        
-#        os.write(1, b'### Got here C ### \n')
-    def plot_xy(self, var_x, var_y, title, xtitle, ytitle, xum, yum):
-        beam_to_plot = self.input_beam._beam
-        
-        #Collect beam info       
-        info_beam = beam_to_plot.histo1(1, nolost=1)
-        self.inten = ("{:.2f}".format(info_beam['intensity']))
-        self.nrays = str(int(info_beam['nrays']))
-        self.grays = str(int(info_beam['good_rays']))
-        self.lrays = str(int(info_beam['nrays']-info_beam['good_rays'])) 
-
-        if self.image_plane == 1:
-            new_shadow_beam = self.input_beam.duplicate(history=False)
-            dist = 0.0
-
-            if self.image_plane_rel_abs_position == 1:  # relative
-                dist = self.image_plane_new_position
-            else:  # absolute
-                if self.input_beam.historySize() == 0:
-                    historyItem = None
-                else:
-                    historyItem = self.input_beam.getOEHistory(oe_number=self.input_beam._oe_number)
-
-                if historyItem is None: image_plane = 0.0
-                elif self.input_beam._oe_number == 0: image_plane = 0.0
-                else: image_plane = historyItem._shadow_oe_end._oe.T_IMAGE
-
-                dist = self.image_plane_new_position - image_plane
-
-            self.retrace_beam(new_shadow_beam, dist)
-
-            beam_to_plot = new_shadow_beam._beam
-
-        self.unitFactorX=1.0
-        self.unitFactorY=1.0
-        xrange, yrange = self.get_ranges(beam_to_plot, var_x, var_y)
-
-        self.replace_fig(beam_to_plot, var_x, var_y, title, xtitle, ytitle, xrange=xrange, yrange=yrange, nbins=100, nolost=self.rays, xum=xum, yum=yum)
-
     def plot_results(self):
         try:
-            plotted = False
-
             sys.stdout = EmittingStream(textWritten=self.writeStdOut)
-            if self.trace_shadow:
-                grabber = TTYGrabber()
-                grabber.start()
+            
+            if not ShadowCongruence.checkEmptyBeam(self.input_beam):
+                return False
 
-            if ShadowCongruence.checkEmptyBeam(self.input_beam):
-                ShadowPlot.set_conversion_active(self.getConversionActive())
+            beam_to_plot = self.input_beam._beam
+            
+            info_beam = beam_to_plot.histo1(1, nolost=1)
+            self.inten = ("{:.2f}".format(info_beam['intensity']))
+            self.nrays = str(int(info_beam['nrays']))
+            self.grays = str(int(info_beam['good_rays']))
+            self.lrays = str(int(info_beam['nrays'] - info_beam['good_rays']))
 
-#                self.number_of_bins = congruence.checkStrictlyPositiveNumber(self.number_of_bins, "Number of Bins")
-                self.number_of_bins = congruence.checkStrictlyPositiveNumber(self.number_of_binsX, "Number of Bins X")
-                self.number_of_bins = congruence.checkStrictlyPositiveNumber(self.number_of_binsY, "Number of Bins Y")
+          
+            beam2D = self.read_shadow_beam(beam=beam_to_plot)
+            self.analyze_beam(beam2D)
 
-                x, y, auto_x_title, auto_y_title, xum, yum = self.get_titles()
-              
-                self.plot_xy(x, y, title='', xtitle=auto_x_title, ytitle=auto_y_title, xum=xum, yum=yum)
+            time.sleep(0.5)
+            return True
 
-                plotted = True
-            if self.trace_shadow:
-                grabber.stop()
-
-                for row in grabber.ttyData:
-                    self.writeStdOut(row)
-
-            time.sleep(0.5)  # prevents a misterious dead lock in the Orange cycle when refreshing the histogram
-
-            return plotted
         except Exception as exception:
-            QtWidgets.QMessageBox.critical(self, "Error",
-                                       str(exception),
-                                       QtWidgets.QMessageBox.Ok)
-
+            QtWidgets.QMessageBox.critical(self, "Error", str(exception), QtWidgets.QMessageBox.Ok)
             if self.IS_DEVELOP: raise exception
-
             return False
 
     def get_ranges(self, beam_to_plot, var_x, var_y):
         xrange = None
         yrange = None
-        factor1 = ShadowPlot.get_factor(var_x, self.workspace_units_to_cm)
-        factor2 = ShadowPlot.get_factor(var_y, self.workspace_units_to_cm)
-
-        self.unitFactorX=factor1
-        self.unitFactorY=factor2
 
         if self.x_range == 0 and self.y_range == 0:
             if self.cartesian_axis == 1:
@@ -653,12 +603,12 @@ class PlotXY(AutomaticElement):
             if self.x_range == 1:
                 congruence.checkLessThan(self.x_range_min, self.x_range_max, "X range min", "X range max")
 
-                xrange = [self.x_range_min / factor1, self.x_range_max / factor1]
+                xrange = [self.x_range_min, self.x_range_max]
 
             if self.y_range == 1:
                 congruence.checkLessThan(self.y_range_min, self.y_range_max, "Y range min", "Y range max")
 
-                yrange = [self.y_range_min / factor2, self.y_range_max / factor2]
+                yrange = [self.y_range_min, self.y_range_max]
 
         return xrange, yrange
 
@@ -984,22 +934,6 @@ class PlotXY(AutomaticElement):
             print("Could not calculate fwhm\n")   
             return [fwhm, 0, 0, 0, 0]
     
-    def find_peak(self, xz):
-        zmax = [0, 0]; xmax = [0, 0]
-    
-        for i in range(len(xz[:,0])):
-            for j in range(len(xz[0,:])):
-                
-                if(xz[i,j] > zmax[1]):
-                    zmax[0] = j
-                    zmax[1] = xz[i,j]
-                                    
-                if(xz[i,j] > xmax[1]):
-                    xmax[0] = i
-                    xmax[1] = xz[i,j]
-                    
-        return xmax, zmax
-
 
     def read_shadow_beam(self, beam):   
 
@@ -1008,369 +942,59 @@ class PlotXY(AutomaticElement):
         x_axis = histo2D['bin_h_center']
         z_axis = histo2D['bin_v_center']
         xz = histo2D['histogram']
+                    
+        XZ = numpy.zeros((self.number_of_binsY+1,self.number_of_binsX+1))
+        XZ[1:,0] = z_axis
+        XZ[0,1:] = x_axis
+        XZ[1:,1:] = numpy.array(xz).transpose()
         
-        if(self.plot_zeroPadding==0):
-            
-            XZ = numpy.zeros((self.number_of_binsY+1,self.number_of_binsX+1))
-            XZ[1:,0] = z_axis
-            XZ[0,1:] = x_axis
-            XZ[1:,1:] = numpy.array(xz).transpose()
-            
-            if(self.gaussian_filter != 0):
-                XZ[1:,1:] = ndimage.gaussian_filter(numpy.array(xz).transpose(), self.gaussian_filter)
-            
-        else:
-
-            x_step = x_axis[1]-x_axis[0]
-            z_step = z_axis[1]-z_axis[0]
-            fct = self.plot_zeroPadding
-            XZ = numpy.zeros((self.number_of_binsY+15, self.number_of_binsX+15))
-            XZ[8:self.number_of_binsY+8,0] = z_axis
-            XZ[0,8:self.number_of_binsX+8] = x_axis
-            XZ[8:self.number_of_binsY+8,8:self.number_of_binsX+8] = numpy.array(xz).transpose()
-            
-            XZ[1,0] = numpy.min(z_axis) - (numpy.max(z_axis) - numpy.min(z_axis))*fct
-            XZ[2:-1,0] = numpy.linspace(z_axis[0] - 6*z_step, z_axis[-1] + 6*z_step, self.number_of_binsY+12)
-            XZ[-1,0] = numpy.max(z_axis) + (numpy.max(z_axis) - numpy.min(z_axis))*fct
-            
-            XZ[0,1] = numpy.min(x_axis) - (numpy.max(x_axis) - numpy.min(x_axis))*fct
-            XZ[0,2:-1] = numpy.linspace(x_axis[0] - 6*x_step, x_axis[-1] + 6*x_step, self.number_of_binsX+12)
-            XZ[0,-1] = numpy.max(x_axis) + (numpy.max(x_axis) - numpy.min(x_axis))*fct
-            
-            if(self.gaussian_filter != 0):
-                XZ[3:self.number_of_binsY+3,3:self.number_of_binsX+3] = ndimage.gaussian_filter(numpy.array(xz).transpose(), self.gaussian_filter)
+        if(self.gaussian_filter != 0):
+            XZ[1:,1:] = ndimage.gaussian_filter(numpy.array(xz).transpose(), self.gaussian_filter)
         
         return XZ
-    
-    def set_ticks_size(self, ax, fontsize):
-        for tick in ax.xaxis.get_major_ticks():
-            tick.label.set_fontsize(fontsize)
-        for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontsize(fontsize)
             
-    def analyze_beam(self, beam2D, cut=0, textA=0, textB=0, textC=0, fitType=0, 
-                     overSampling=200.0, zeroPadding=False, 
-                     unitFactor=1.0, xlabel='X', ylabel='Z', units='', 
-                     invertXY=False, scale=0, showPlot=False):
-        
-        if(invertXY):        
-            z_axis = beam2D[0,1:]*self.unitFactorY
-            x_axis = beam2D[1:,0]*self.unitFactorY        
-            xz = numpy.array(beam2D[1:,1:]).transpose()
-        
-        else:       
-            z_axis = numpy.array(beam2D[1:,0]*self.unitFactorY)
-            x_axis = numpy.array(beam2D[0,1:]*self.unitFactorX)
-            xz = numpy.array(beam2D[1:,1:])
             
-        if(float(self.integral) > 0.0):
-            rays_integral = numpy.sum(xz) * (x_axis[int(len(x_axis)/2 + 1)]-x_axis[int(len(x_axis)/2)]) * (z_axis[int(len(z_axis)/2 + 1)]-z_axis[int(len(z_axis)/2)])
-            xz = xz / rays_integral # probability density function (integral equal to 1)
-            xz = xz * float(self.integral) # distribution in physical units [unit = unit[integral] / (unit[x_azis] * unit[z_axis])] 
-        #os.write(1, b'### Got here 2 ### \n')
-
-        x_cut_coord = 0.0
-        z_cut_coord = 0.0
-       
-        # FIND MEAN VALUE
-        z_int = numpy.array([numpy.sum(xz[i,1:]) for i in range(len(z_axis))])
-        x_int = numpy.array([numpy.sum(xz[1:,j]) for j in range(len(x_axis))])
-        z_mean = numpy.average(z_axis, weights=z_int)
-        x_mean = numpy.average(x_axis, weights=x_int)
-#        os.write(1, b'### Got here 3 ### \n')
-        # FIND PEAK VALUES
-        xmax, zmax = self.find_peak(xz)
-        
-        if(cut==0): # PLOT INTEGRATED DISTRIBUTION
-            z_cut = numpy.array([numpy.sum(xz[i,1:]) for i in range(len(z_axis))])*(x_axis[int(len(x_axis)/2 + 1)]-x_axis[int(len(x_axis)/2)])
-            x_cut = numpy.array([numpy.sum(xz[1:,j]) for j in range(len(x_axis))])*(z_axis[int(len(z_axis)/2 + 1)]-z_axis[int(len(z_axis)/2)])
-            
-        elif(cut==1): # PLOT CUT AT ZERO
-            z_cut = xz[:, numpy.abs(x_axis).argmin()]
-            x_cut = xz[numpy.abs(z_axis).argmin(), :]
-        
-        elif(cut==2): # PLOT CUT AT PEAK
-            x_cut_coord = x_axis[zmax[0]]
-            z_cut_coord = z_axis[xmax[0]]
-            z_cut = xz[:, zmax[0]]
-            x_cut = xz[xmax[0], :]
-
-        elif(cut==3): # PLOT CUT AT MEAN VALUE OF INTEGRATED DISTRIBUTION
-            x_cut_coord = x_axis[numpy.abs(x_axis-x_mean).argmin()]
-            z_cut_coord = z_axis[numpy.abs(z_axis-z_mean).argmin()]
-            z_cut = xz[:, numpy.abs(x_axis-x_mean).argmin()]
-            x_cut = xz[numpy.abs(z_axis-z_mean).argmin(), :]
-            
-        elif(cut==4): # PLOT CUT AT CUSTOM VALUES
-            x_cut_coord = x_axis[numpy.abs(x_axis-self.x_cut_pos).argmin()]
-            z_cut_coord = z_axis[numpy.abs(z_axis-self.y_cut_pos).argmin()]
-            z_cut = xz[:, numpy.abs(x_axis-self.x_cut_pos).argmin()]
-            x_cut = xz[numpy.abs(z_axis-self.y_cut_pos).argmin(), :]
-            pass
-        
-#        os.write(1, b'### Got here 4 ### \n')
-        z_cut_rms = self.calc_rms(z_axis, z_cut)
-        x_cut_rms = self.calc_rms(x_axis, x_cut)
-        
-        if(self.plot_zeroPadding != 0):
-            z_cut_fwhm = self.get_fwhm(z_axis, z_cut, oversampling=overSampling, zero_padding=False, avg_correction=False, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext, npoints=1)
-            x_cut_fwhm = self.get_fwhm(x_axis, x_cut, oversampling=overSampling, zero_padding=False, avg_correction=False, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext, npoints=1)
-        else:
-            z_cut_fwhm = self.get_fwhm(z_axis, z_cut, oversampling=overSampling, zero_padding=True, avg_correction=False, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext)
-            x_cut_fwhm = self.get_fwhm(x_axis, x_cut, oversampling=overSampling, zero_padding=True, avg_correction=False, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext)
-        
-            # ==================================================================== #
-        # === FITTING DISTRIBUTIONS ========================================== #
-        # ==================================================================== #
-        
-        if(fitType != 0):
-            
-            if(fitType==1):
-    
-                popt_z_cut, perr_z_cut = self.fit_gauss(z_axis, z_cut, [numpy.max(z_cut), z_mean, z_cut_rms], 10000)
-                z_cut_fit = self.gauss_function(z_axis, popt_z_cut[0], popt_z_cut[1], popt_z_cut[2])
-                        
-                popt_x_cut, perr_x_cut = self.fit_gauss(x_axis, x_cut, [numpy.max(x_cut), x_mean, x_cut_rms], 10000)
-                x_cut_fit = self.gauss_function(x_axis, popt_x_cut[0], popt_x_cut[1], popt_x_cut[2])
+    def analyze_beam(self, beam2D):
                 
-            elif(fitType==2):
-    
-                poptl_z_cut, perrl_z_cut = self.fit_lorentz(z_axis, z_cut, [numpy.max(z_cut), z_mean, z_cut_rms], 10000)
-                z_cut_fit = self.lorentz_function(z_axis, poptl_z_cut[0], poptl_z_cut[1], poptl_z_cut[2])
-                
-                poptl_x_cut, perrl_x_cut = self.fit_lorentz(x_axis, x_cut, [numpy.max(x_cut), x_mean, x_cut_rms], 10000)
-                x_cut_fit = self.lorentz_function(x_axis, poptl_x_cut[0], poptl_x_cut[1], poptl_x_cut[2])
-    
-            elif(fitType==3):
+        plot = plot_beam(
+            beam2D,
+            show_plot=False,
+            cut=self.cut,
+            textA=self.textA,
+            textB=self.textB,
+            textC=self.textC,
+            textD=self.textD,
+            fitType=self.fitType,
+            overSampling=self.fwhm_oversampling,
+            fwhm_zeroPadding=(self.plot_zeroPadding_x != 0 or self.plot_zeroPadding_z != 0),
+            xlabel=self.hor_label if self.hor_label else self.get_titles()[2],
+            ylabel=self.vert_label if self.vert_label else self.get_titles()[3],
+            units= self.units_definition,
+            plot_title=self.plottitle,
+            invertXY=self.invertXY,
+            scale=self.scale,
+            fwhm_threshold=self.fwhm_threshold,
+            fwhm_int_ext=self.fwhm_int_ext,
+            x_cut_pos=self.x_cut_pos,
+            y_cut_pos=self.y_cut_pos,
+            x_range=(self.x_range == 1),
+            y_range=(self.y_range == 1),
+            x_range_min=self.x_range_min,
+            x_range_max=self.x_range_max,
+            y_range_min=self.y_range_min,
+            y_range_max=self.y_range_max,
+            integral=float(self.integral) if self.integral.replace('.','',1).isdigit() else 0.0,
+            zero_pad_x=self.plot_zeroPadding_x,
+            zero_pad_y=self.plot_zeroPadding_z,
+            figure=self.figure,
+            ax2D=self.ax2D,
+            axX=self.axX,
+            axY=self.axY,
+            axT=self.axT
+        )
 
-                poptlg_z_cut, perrlg_z_cut = self.fit_lorentz_gauss(z_axis, z_cut, [z_mean, numpy.max(z_cut), z_cut_rms, numpy.max(z_cut), z_cut_rms], 10000)
-                z_cut_fit = self.lorentz_gauss_function(z_axis, poptlg_z_cut[0], poptlg_z_cut[1], poptlg_z_cut[2], poptlg_z_cut[3], poptlg_z_cut[4])
-        
-                poptlg_x_cut, perrlg_x_cut = self.fit_lorentz_gauss(x_axis, x_cut, [x_mean, numpy.max(x_cut), x_cut_rms, numpy.max(x_cut), x_cut_rms], 10000)
-                x_cut_fit = self.lorentz_gauss_function(x_axis, poptlg_x_cut[0], poptlg_x_cut[1], poptlg_x_cut[2], poptlg_x_cut[3], poptlg_x_cut[4])
-          
-            if(self.plot_zeroPadding != 0):
-                z_cut_fit_fwhm = self.get_fwhm(z_axis, z_cut_fit, oversampling=overSampling, zero_padding=False, avg_correction=True, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext)
-                x_cut_fit_fwhm = self.get_fwhm(x_axis, x_cut_fit, oversampling=overSampling, zero_padding=False, avg_correction=True, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext)
-            else:
-                z_cut_fit_fwhm = self.get_fwhm(z_axis, z_cut_fit, oversampling=overSampling, zero_padding=True, avg_correction=True, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext)
-                x_cut_fit_fwhm = self.get_fwhm(x_axis, x_cut_fit, oversampling=overSampling, zero_padding=True, avg_correction=True, threshold=self.fwhm_threshold, inmost_outmost=self.fwhm_int_ext)
-            
-            z_cut_fit_rms = self.calc_rms(z_axis, z_cut_fit)
-            x_cut_fit_rms = self.calc_rms(x_axis, x_cut_fit)
-            
-#        os.write(1, b'### Got here 5 ### \n')
-        # ==================================================================== #
-        # === PLOTTING DATA ================================================== #
-        # ==================================================================== #
-    
-#        
-        fontsize=12
-#       
-        self.ax2D.clear()
-        self.axX.clear()
-        self.axY.clear()
-        self.axT.clear()
+        self.xz = plot['xz']
+        self.x_axis = plot['x_axis']
+        self.z_axis = plot['z_axis']    
 
-        self.axY.invert_xaxis()
-        # Adjust Ticks
-        self.axX.xaxis.set_major_locator(plt.MaxNLocator(5))
-        self.axY.xaxis.set_major_locator(plt.MaxNLocator(2))
-        self.axY.yaxis.set_major_locator(plt.MaxNLocator(5))
-        self.axX.minorticks_on()
-        self.axY.minorticks_on()
-        self.ax2D.minorticks_on()
-        
-        self.set_ticks_size(self.axX, fontsize)
-        self.set_ticks_size(self.axY, fontsize)
-        self.set_ticks_size(self.ax2D, fontsize)
-            
-        self.axX.xaxis.set_tick_params(which='both', direction='in', top=True, bottom=True, labelbottom=False)
-        self.axX.yaxis.set_tick_params(which='both', direction='in', top=True, bottom=True, labelleft=False, labelright=True, labelsize=fontsize)
-        self.axX.yaxis.set_tick_params(which='both', direction='in', left=True, right=True)
-        self.axY.yaxis.set_tick_params(which='both', direction='in', left=True, right=True, labelleft=False, labelright=False)
-        self.axY.xaxis.set_tick_params(which='both', direction='in', top=True, bottom=True)
-        self.ax2D.yaxis.set_label_position("right")
-        self.ax2D.tick_params(axis='both', which='both', direction='out', left=True,top=True,right=True,bottom=True,labelleft=False,labeltop=False, labelright=True,labelbottom=True, labelsize=fontsize)#, width=1.3)
-        self.axT.tick_params(axis='both',which='both',left=False,top=False,right=False,bottom=False,labelleft=False,labeltop=False, labelright=False,labelbottom=False)
-        
-        
-        self.axX.grid(which='both', alpha=0.2, linewidth=0.3)
-        self.axY.grid(which='both', alpha=0.2, linewidth=0.3)
-        
-        # Write Labels
-        if(self.hor_label != ''):
-            self.ax2D.set_xlabel(self.hor_label, fontsize=fontsize)
-        else:    
-            self.ax2D.set_xlabel(xlabel + ' ' + units, fontsize=fontsize)
-            
-        if(self.vert_label != ''):
-            self.ax2D.set_ylabel(self.vert_label, fontsize=fontsize)
-        else:
-            self.ax2D.set_ylabel(ylabel + ' ' + units, fontsize=fontsize)
-            
-        # Plots data    
-        if(scale==0):
-            self.ax2D.pcolormesh(x_axis, z_axis, xz) # 2D data
-            
-        elif(scale==1):
-            # If there is a negative or zero number, it will be replaced by half minimum value higher than 0.
-            if(numpy.min(xz) <= 0.0):
-                xz_min_except_0 = numpy.min(xz[xz>0])
-                xz[xz<=0.0] = xz_min_except_0/2.0
-                self.ax2D.pcolormesh(x_axis, z_axis, xz, norm=LogNorm(vmin=xz.min(), vmax=xz.max()))
-    
-            else:
-                self.ax2D.pcolormesh(x_axis, z_axis, xz, norm=LogNorm(vmin=xz.min(), vmax=xz.max()))
-            
-            self.axX.set_yscale('log')
-            self.axY.set_xscale('log')
-        
-        self.ax2D.axvline(x=x_cut_coord, color='k', linestyle='--', alpha=0.1)
-        self.ax2D.axhline(y=z_cut_coord, color='k', linestyle='--', alpha=0.1)
-        self.axX.axvline(x=x_cut_coord, color='k', linestyle='--', alpha=0.1)
-        self.axY.axhline(y=z_cut_coord, color='k', linestyle='--', alpha=0.1)
-        
-        ###### TESTING ####
-#        def interp_distribution(array_x,array_y,oversampling):
-#            dist = interp1d(array_x, array_y)
-#            x_int = numpy.linspace(numpy.min(array_x), numpy.max(array_x), int(len(array_x)*oversampling))
-#            y_int = dist(x_int)
-#            return x_int, y_int 
-#        
-#        x_axis, x_cut = interp_distribution(x_axis, x_cut, oversampling=overSampling)
-#        z_axis, z_cut = interp_distribution(z_axis, z_cut, oversampling=overSampling)
-        
-#        self.axX.plot(x_axis, x_cut, 'o-C0', markersize=6)
-#        self.axY.plot(z_cut, z_axis, 'o-C0', markersize=6)
-#        self.axX.plot(x_cut_fwhm[5], x_cut_fwhm[6], 'oC2', markersize=4) # Refined array for FWHM calc
-#        self.axX.plot(x_cut_fwhm[7], x_cut_fwhm[8], 'oC2', markersize=4) # Refined array for FWHM calc
-        
-        self.axX.plot(x_axis, x_cut, '-C0')
-        self.axY.plot(z_cut, z_axis, '-C0')
-        self.axX.plot([x_cut_fwhm[1], x_cut_fwhm[2]], [x_cut_fwhm[3], x_cut_fwhm[4]], '+C0', markersize=12) # FWHM marks
-        self.axY.plot([z_cut_fwhm[3], z_cut_fwhm[4]], [z_cut_fwhm[1], z_cut_fwhm[2]], '+C0', markersize=12) # FWHM marks
-
-        if(fitType != 0):        
-            
-            self.axX.plot(x_axis, x_cut_fit, 'C1--')
-            self.axY.plot(z_cut_fit, z_axis, 'C1--')
-            self.axX.plot([x_cut_fit_fwhm[1], x_cut_fit_fwhm[2]], [x_cut_fit_fwhm[3], x_cut_fit_fwhm[4]], '+C1', markersize=12) # FWHM marks
-            self.axY.plot([z_cut_fit_fwhm[3], z_cut_fit_fwhm[4]], [z_cut_fit_fwhm[1], z_cut_fit_fwhm[2]], '+C1', markersize=12) # FWHM marks
-#        os.write(1, b'### Got here 3 ### \n')
-        
-        # Defines limits
-        if(self.x_range != 0):
-            self.ax2D.set_xlim(self.x_range_min, self.x_range_max)
-            self.axX.set_xlim(self.x_range_min, self.x_range_max)
-        else:
-            self.ax2D.set_xlim(x_axis[0],x_axis[-1])
-
-            
-        
-        if(self.y_range != 0):
-            self.ax2D.set_ylim(self.y_range_min, self.y_range_max)
-            self.axY.set_ylim(self.y_range_min, self.y_range_max)
-        else:
-            self.ax2D.set_ylim(z_axis[0],z_axis[-1])
-
-       
-        # Updating Y limits
-#        self.axX.set_ylim(numpy.min(x_cut) - (numpy.max(x_cut)-numpy.min(x_cut))/10, numpy.max(x_cut) + (numpy.max(x_cut)-numpy.min(x_cut))/10)
-#        self.axY.set_xlim(numpy.max(z_cut) + (numpy.max(z_cut)-numpy.min(z_cut))/10, numpy.min(z_cut) - (numpy.max(z_cut)-numpy.min(z_cut))/10)
-        
-        self.axX.set_ylim(0 - (numpy.max(x_cut)-numpy.min(x_cut))/10, numpy.max(x_cut) + (numpy.max(x_cut)-numpy.min(x_cut))/10)
-        self.axY.set_xlim(numpy.max(z_cut) + (numpy.max(z_cut)-numpy.min(z_cut))/10, 0 - (numpy.max(z_cut)-numpy.min(z_cut))/10)
-        
-        
-        hor_label = 'X'
-        vert_label = 'Y'
-        
-        #TITLE
-        if(len(self.plottitle) <= 20):
-            text1 = self.plottitle
-        else:
-            text1 = self.plottitle[:20] + '\n' + self.plottitle[20:41]
-        
-        # MEAN COORDINATES    
-        text2  = hor_label+' MEAN = {0:.3f}\n'.format(x_mean)
-        text2 += vert_label+' MEAN = {0:.3f}\n\n'.format(z_mean)
-        
-        # PEAK COORDINATES
-        text3  = hor_label+' PEAK = {0:.3f}\n'.format(x_axis[zmax[0]])
-        text3 += vert_label+' PEAK = {0:.3f}\n'.format(z_axis[xmax[0]])
-
-        # DATA RANGE
-        text4  = hor_label+' RANGE = {0:.3f}\n'.format(x_axis[-1] - x_axis[0])
-        text4 += vert_label+' RANGE = {0:.3f}\n'.format(z_axis[-1] - z_axis[0])
-
-        # CUT FWHM
-        text5  = hor_label+' FWHM = {0:.3f}\n'.format(x_cut_fwhm[0])
-        text5 += vert_label+' FWHM = {0:.3f}\n'.format(z_cut_fwhm[0])
-        
-        # CUT RMS
-        text6  = hor_label+' RMS = {0:.3f}\n'.format(x_cut_rms)
-        text6 += vert_label+' RMS = {0:.3f}\n'.format(z_cut_rms)
-        
-        # CUT MAXIMUM
-        text7  = hor_label+' MAX = {0:.3f}\n'.format(numpy.max(x_cut))
-        text7 += vert_label+' MAX = {0:.3f}\n'.format(numpy.max(z_cut))
-        
-        text8 = ''; text9 = ''; text10 = ''; text11 = ''; text12 = ''; # IF FIT IS DISABLED
-        
-        if(fitType != 0):
-            
-            # MEAN COORDINATES
-            text8  = hor_label+' MEAN = {0:.3f}\n'.format(numpy.average(x_axis, weights=x_cut_fit))
-            text8 += vert_label+' MEAN = {0:.3f}\n'.format(numpy.average(z_axis, weights=z_cut_fit))
-            
-            # PEAK COORDINATES
-            text9  = hor_label+' PEAK = {0:.3f}\n'.format(x_axis[numpy.abs(x_cut_fit - numpy.max(x_cut_fit)).argmin()])
-            text9 += vert_label+' PEAK = {0:.3f}\n'.format(z_axis[numpy.abs(z_cut_fit - numpy.max(z_cut_fit)).argmin()])
-            
-            # CUT FIT FWHM
-            text10  = hor_label+' FWHM = {0:.3f}\n'.format(x_cut_fit_fwhm[0])
-            text10 += vert_label+' FWHM = {0:.3f}\n'.format(z_cut_fit_fwhm[0])
-            
-            # CUT FIT RMS
-            text11  = hor_label+' RMS = {0:.3f}\n'.format(x_cut_fit_rms)
-            text11 += vert_label+' RMS = {0:.3f}\n'.format(z_cut_fit_rms)
-            
-            # CUT FIT MAXIMUM
-            text12  = hor_label+' MAX = {0:.3f}\n'.format(numpy.max(x_cut_fit))
-            text12 += vert_label+' MAX = {0:.3f}\n'.format(numpy.max(z_cut_fit))
-                
-        def text(x):
-            return {
-                0 : ['', 'black'],
-                1 : [text1, 'black'],
-                2 : [text2, 'C0'],
-                3 : [text3, 'C0'],
-                4 : [text4, 'C0'],
-                5 : [text5, 'C0'],
-                6 : [text6, 'C0'],
-                7 : [text7, 'C0'],
-                8 : [text8, 'C1'],
-                9 : [text9, 'C1'],
-                10 : [text10, 'C1'],
-                11 : [text11, 'C1'],
-                12 : [text12, 'C1']
-            }.get(x, ['', ''])       
-        
-        [text_box1, color1] = text(textA)
-        [text_box2, color2] = text(textB)        
-        [text_box3, color3] = text(textC)        
- 
-        self.xz = xz
-        self.x_axis = x_axis
-        self.z_axis = z_axis    
-    
-        self.axT.text(self.LTborder + 0.02, self.RBborder + self.width_main + self.space + self.X_or_Y - 0.05, text_box1, color=color1, family='serif', weight='medium', horizontalalignment='left', verticalalignment='top', fontsize=10, transform= self.axT.transAxes)
-        self.axT.text(self.LTborder + 0.02, self.RBborder + self.width_main + self.space + self.X_or_Y - 0.35, text_box2, color=color2, family='serif', weight='medium', horizontalalignment='left', verticalalignment='top', fontsize=10, transform= self.axT.transAxes)
-        self.axT.text(self.LTborder + 0.02, self.RBborder + self.width_main + self.space + self.X_or_Y - 0.65, text_box3, color=color3, family='serif', weight='medium', horizontalalignment='left', verticalalignment='top', fontsize=10, transform= self.axT.transAxes)
-            
         self.figure.canvas.draw()
-        
-
-
-
