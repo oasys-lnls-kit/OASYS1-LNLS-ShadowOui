@@ -206,7 +206,7 @@ class HybridInfo(widget.OWWidget):
                 
                 self.input_beam = beam 
                 
-                if 'element_list' in globals():
+                if hasattr(self, 'element_list'):
                     pass
                 else:
                     self.element_list = []
