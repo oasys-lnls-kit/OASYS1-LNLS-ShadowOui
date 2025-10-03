@@ -444,6 +444,14 @@ class FluxWidget(LNLSShadowWidget):
     ### Get Source Info - For Bending Magnet, Geometrical Source and Undulator Gaussian ###
     def get_parameters_from_source(self):
         if(hasattr(self, 'input_beam')):
+            if self.input_beam.history[0]._widget_class_name in ['Geometrical Source', 'Undulator Gaussian']:
+                    self.source_type = 2
+            elif self.input_beam.history[0]._widget_class_name == 'Wiggler':
+                self.source_type = 1
+            elif self.input_beam.history[0]._widget_class_name == 'Bending Magnet':
+                self.source_type = 0
+            
+            self.set_Source()
             try:
                 Source = self.input_beam.history[0]._shadow_source_end.src
                 
