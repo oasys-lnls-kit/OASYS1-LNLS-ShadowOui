@@ -1,34 +1,26 @@
-import copy
 import sys
 import time
 
 from orangecontrib.shadow.lnls.widgets.utility.plot import plot_beam
 
-from matplotlib.patches import Shadow
 import numpy
 from PyQt5 import QtGui, QtWidgets
 from orangewidget import gui
 from orangewidget.settings import Setting
 from oasys.widgets import gui as oasysgui
 from oasys.widgets import congruence
-from oasys.widgets.gui import ConfirmDialog
 
 from oasys.util.oasys_util import EmittingStream, TTYGrabber
 
 from orangecontrib.shadow.util.shadow_objects import ShadowBeam
-from orangecontrib.shadow.util.shadow_util import ShadowCongruence, ShadowPlot
+from orangecontrib.shadow.util.shadow_util import ShadowCongruence
 from orangecontrib.shadow.widgets.gui.ow_automatic_element import AutomaticElement
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from matplotlib.colors import LogNorm
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 from scipy import ndimage
-from scipy.optimize import curve_fit
-from scipy.interpolate import interp1d
 
 class PlotXY(AutomaticElement):
 
@@ -697,9 +689,6 @@ class PlotXY(AutomaticElement):
     def getConversionActive(self):
         return self.is_conversion_active==1
 
-####################################################################
-######### BEAM ANALYSIS FUNCTIONS ##################################
-####################################################################
      
     def read_shadow_beam(self, beam):   
 
