@@ -296,7 +296,7 @@ class CausticWidget(LNLSShadowWidgetC):
 
         button_box2 = oasysgui.widgetBox(self.options2D_box, "", addSpace=False, orientation="vertical")
 
-        button3 = gui.button(button_box2, self, "Launch 3D Visualization", callback=self.launch_mayavi)
+        button3 = gui.button(button_box2, self, "Launch 3D Visualization", callback=self.launch_pyvista)
         font = QFont(button3.font())
         font.setBold(True)
         button3.setFont(font)
@@ -677,30 +677,30 @@ class CausticWidget(LNLSShadowWidgetC):
         print("\nPlots saved to disk!\n")
         
   
-    def launch_mayavi(self):
-#        axXZ
+    def launch_pyvista(self):
+#       axXZ
         
         try:
-            congruence.checkDir(self.load_filename)   
+            congruence.checkDir(self.load_filename)
         except Exception:
             sys.stdout.write('3D visualization failed (File not found in this directory)\n')
             QtWidgets.QMessageBox.critical(self, "Error", 'Please enter a valid file name', QtWidgets.QMessageBox.Ok)
-            
+
         try:
-            import mayavi.mlab
+            import pyvista
+            import pyvistaqt
             import platform
             
-            mayavi_path = os.path.split(__file__)[0] 
-            
+            pyvista_path = os.path.split(__file__)[0] 
+                                    
             if platform.system() == 'Linux':
-                command_str = "gnome-terminal -e 'bash -c \" python {0} -f {1} ; exec bash\"'".format(os.path.join(mayavi_path, 'volume_slicer_mayavi.py'), os.path.join(os.getcwd(), self.load_filename))
+                command_str = "gnome-terminal -e 'bash -c \" python {0} -f {1} ; exec bash\"'".format(os.path.join(pyvista_path, 'volume_slicer_pyvista.py'), os.path.join(os.getcwd(), self.load_filename))
             if platform.system() == 'Windows':
-                command_str = "cmd /c python {0} -f {1} ".format(os.path.join(mayavi_path, 'volume_slicer_mayavi.py'), os.path.join(os.getcwd(), self.load_filename))
-            os.system(command_str)         
-            
+                command_str = "cmd /c python {0} -f {1} ".format(os.path.join(pyvista_path, 'volume_slicer_pyvista.py'), os.path.join(os.getcwd(), self.load_filename))
+            os.system(command_str)
+
         except ImportError:
-            raise ImportError("For 3D visualization, please 'pip install mayavi' in the oasys environment")
-        
+            raise ImportError("For 3D visualization, please 'pip install pyvista pyvistaqt' in the oasys environment")
         
     def writeStdOut(self, text):        
         cursor = self.shadow_output.textCursor()
