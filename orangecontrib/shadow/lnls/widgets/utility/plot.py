@@ -37,7 +37,7 @@ def beam_integral(mtx):
     return np.sum(mtx[1:,1:])*px*py
 
 def plot_beam(beam2D, show_plot=True, outfilename='', outfileext='png', cut=0, textA=0, textB=0, textC=0, textD=0, fitType=0, 
-                     overSampling=200.0, fwhm_zeroPadding=0, unitFactor=1e3, xlabel='X', ylabel='Y', zlabel='', units=2, plot_title='', 
+                     overSampling=200.0, fwhm_zeroPadding=0, unitFactorX=1e3, unitFactorY=1e3, xlabel='X', ylabel='Y', zlabel='', units=2, plot_title='', 
                      invertXY=False, scale=0, fwhm_threshold=0.5, fwhm_int_ext=1, show_colorbar=0, z_min_factor=0,
                      x_cut_pos=0.0, y_cut_pos=0.0, x_range = 0, y_range = 0, cmap='jet', grid=1, integral=0, peak_density=0,
                      x_range_min=-0.25, x_range_max=0.25, y_range_min=-0.25, y_range_max=0.25, z_range_min=float('NaN'), z_range_max=float('NaN'),
@@ -97,8 +97,10 @@ def plot_beam(beam2D, show_plot=True, outfilename='', outfileext='png', cut=0, t
         The default is 0 (don't fit).
     overSampling : float, optional
         multiplication factor for slice number of points for FWHM. The default is 200.0.
-    unitFactor : float, optional
-        multiplication factor for changing units. The default is 1e3.
+    unitFactorX : float, optional
+        multiplication factor for changing units in horizontal axis. The default is 1e3.
+    unitFactorY : float, optional
+        multiplication factor for changing units in vertical axis. The default is 1e3.
     xlabel : str, optional
         horizontal axis label. The default is 'X'.
     ylabel : str, optional
@@ -172,15 +174,18 @@ def plot_beam(beam2D, show_plot=True, outfilename='', outfileext='png', cut=0, t
 
     # HANDLE UNITS
     if(units == 0): # [mm]
-        unitFactor = 1
+        unitFactorX = 1
+        unitFactorY = 1
         unitLabel = 'mm'
         
     elif(units == 1): # [um]
-        unitFactor = 1e3
+        unitFactorX = 1e3
+        unitFactorY = 1e3
         unitLabel = '$\mu$m'
         
     elif(units == 2): # [nm]
-        unitFactor = 1e6
+        unitFactorX = 1e6
+        unitFactorY = 1e6
         unitLabel = 'nm'
         
     else:
@@ -191,17 +196,17 @@ def plot_beam(beam2D, show_plot=True, outfilename='', outfileext='png', cut=0, t
     
     # TRADE X and Y axes if needed
     if(invertXY):        
-        z_axis = beam2D[0,1:]*unitFactor
-        x_axis = beam2D[1:,0]*unitFactor
+        z_axis = beam2D[0,1:]*unitFactorY
+        x_axis = beam2D[1:,0]*unitFactorX
         xz = np.array(beam2D[1:,1:]).transpose()
             
     else:       
-        z_axis = beam2D[1:,0]*unitFactor
-        x_axis = beam2D[0,1:]*unitFactor
+        z_axis = beam2D[1:,0]*unitFactorY
+        x_axis = beam2D[0,1:]*unitFactorX
         xz = np.array(beam2D[1:,1:])
         
     if(isdensity):
-        xz = xz / unitFactor**2
+        xz = xz / (unitFactorX * unitFactorY)
 
     # NORMALIZE TO PEAK DENSITY
     if(peak_density < 0):
