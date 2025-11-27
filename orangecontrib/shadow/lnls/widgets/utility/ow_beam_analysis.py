@@ -750,7 +750,7 @@ class PlotXY(AutomaticElement):
             x_range_max=self.x_range_max,
             y_range_min=self.y_range_min,
             y_range_max=self.y_range_max,
-            integral=float(self.integral) if self.integral.replace(',', '.') else 0.0,
+            integral=float(self.integral.replace(',', '.')),
             zero_pad_x=self.plot_zeroPadding_x,
             zero_pad_y=self.plot_zeroPadding_z,
             figure=self.figure,
