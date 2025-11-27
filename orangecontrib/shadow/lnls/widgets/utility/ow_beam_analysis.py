@@ -1,7 +1,8 @@
 import sys
 import time
 
-from orangecontrib.shadow.lnls.widgets.utility.plot import plot_beam
+# from orangecontrib.shadow.lnls.widgets.utility.plot import plot_beam
+from optlnls.plot import plot_beam
 
 import numpy
 from PyQt5 import QtGui, QtWidgets
@@ -732,6 +733,7 @@ class PlotXY(AutomaticElement):
             fwhm_zeroPadding=(self.plot_zeroPadding_x != 0 or self.plot_zeroPadding_z != 0),
             xlabel=self.hor_label if self.hor_label else self.get_titles()[2],
             ylabel=self.vert_label if self.vert_label else self.get_titles()[3],
+            zlabel = '',
             units = '', #um to default, future use for other units
             unitFactorX = self.unitFactorX,
             unitFactorY = self.unitFactorY,
@@ -748,7 +750,7 @@ class PlotXY(AutomaticElement):
             x_range_max=self.x_range_max,
             y_range_min=self.y_range_min,
             y_range_max=self.y_range_max,
-            integral=float(self.integral) if self.integral.replace('.','',1).isdigit() else 0.0,
+            integral=float(self.integral) if self.integral.replace(',', '.') else 0.0,
             zero_pad_x=self.plot_zeroPadding_x,
             zero_pad_y=self.plot_zeroPadding_z,
             figure=self.figure,
