@@ -176,17 +176,17 @@ def plot_beam(beam2D, show_plot=True, outfilename='', outfileext='png', cut=0, t
     if(units == 0): # [mm]
         unitFactorX = 1
         unitFactorY = 1
-        unitLabel = 'mm'
+        unitLabel = ' [mm]'
         
     elif(units == 1): # [um]
         unitFactorX = 1e3
         unitFactorY = 1e3
-        unitLabel = '$\mu$m'
+        unitLabel = ' [$\mu$m]'
         
     elif(units == 2): # [nm]
         unitFactorX = 1e6
         unitFactorY = 1e6
-        unitLabel = 'nm'
+        unitLabel = ' [nm]'
         
     else:
         unitLabel = units # units is a string in this case
@@ -448,8 +448,8 @@ def plot_beam(beam2D, show_plot=True, outfilename='', outfileext='png', cut=0, t
         axY.grid(which='both', alpha=0.2, linewidth=0.3)
     
     # Write Labels
-    ax2D.set_xlabel(xlabel + ' [' + unitLabel + ']', fontsize=fontsize)
-    ax2D.set_ylabel(ylabel + ' [' + unitLabel + ']', fontsize=fontsize)
+    ax2D.set_xlabel(xlabel + unitLabel, fontsize=fontsize)
+    ax2D.set_ylabel(ylabel + unitLabel, fontsize=fontsize)
 
     """if ((x_cut.min() >= 0) & (z_cut.min() >= 0)):
         if((cut == 0) & (zlabel == '')):
