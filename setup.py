@@ -41,7 +41,7 @@ SETUP_REQUIRES = ("setuptools",)
 
 INSTALL_REQUIRES = (
     "setuptools",
-    "optlnls>=0.3.3",
+    "optlnls>=0.3.27",
 )
 
 if (

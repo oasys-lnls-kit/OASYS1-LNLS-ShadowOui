@@ -1,7 +1,8 @@
 import sys
 import time
 
-from orangecontrib.shadow.lnls.widgets.utility.plot import plot_beam
+# from orangecontrib.shadow.lnls.widgets.utility.plot import plot_beam
+from optlnls.plot import plot_beam
 
 import numpy
 from PyQt5 import QtGui, QtWidgets
@@ -13,7 +14,7 @@ from oasys.widgets import congruence
 from oasys.util.oasys_util import EmittingStream, TTYGrabber
 
 from orangecontrib.shadow.util.shadow_objects import ShadowBeam
-from orangecontrib.shadow.util.shadow_util import ShadowCongruence
+from orangecontrib.shadow.util.shadow_util import ShadowCongruence, ShadowPlot
 from orangecontrib.shadow.widgets.gui.ow_automatic_element import AutomaticElement
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -316,7 +317,7 @@ class PlotXY(AutomaticElement):
         oasysgui.lineEdit(histograms_box, self, "number_of_binsX", "Number of Bins X", labelWidth=250, valueType=int, orientation="horizontal")
         oasysgui.lineEdit(histograms_box, self, "number_of_binsY", "Number of Bins Y", labelWidth=250, valueType=int, orientation="horizontal")
         
-        gui.comboBox(histograms_box, self, "is_conversion_active", label="Is U.M. conversion active", labelWidth=250,
+        gui.comboBox(histograms_box, self, "is_conversion_active", label="Convert to " + u"\u03BC" + "m or " + u"\u03BC" + "rad?", labelWidth=250,
                      items=["No", "Yes"], sendSelectedValue=False, orientation="horizontal")
 
         plot_control_box = oasysgui.widgetBox(tab_gen, "Plot Controls", addSpace=True, orientation="vertical", height=440)
@@ -710,6 +711,12 @@ class PlotXY(AutomaticElement):
             
             
     def analyze_beam(self, beam2D):
+
+        var_x, var_y, _, _, _, _ = self.get_titles()
+
+        ShadowPlot.set_conversion_active(self.getConversionActive())
+        self.unitFactorX = ShadowPlot.get_factor(var_x, self.workspace_units_to_cm)
+        self.unitFactorY = ShadowPlot.get_factor(var_y, self.workspace_units_to_cm)
                 
         plot = plot_beam(
             beam2D,
@@ -726,7 +733,10 @@ class PlotXY(AutomaticElement):
             fwhm_zeroPadding=(self.plot_zeroPadding_x != 0 or self.plot_zeroPadding_z != 0),
             xlabel=self.hor_label if self.hor_label else self.get_titles()[2],
             ylabel=self.vert_label if self.vert_label else self.get_titles()[3],
-            units= 1, #um to default, future use for other units
+            zlabel = '',
+            units = '', #um to default, future use for other units
+            unitFactorX = self.unitFactorX,
+            unitFactorY = self.unitFactorY,
             plot_title=self.plottitle,
             invertXY=self.invertXY,
             scale=self.scale,
@@ -740,7 +750,7 @@ class PlotXY(AutomaticElement):
             x_range_max=self.x_range_max,
             y_range_min=self.y_range_min,
             y_range_max=self.y_range_max,
-            integral=float(self.integral) if self.integral.replace('.','',1).isdigit() else 0.0,
+            integral=float(self.integral.replace(',', '.')),
             zero_pad_x=self.plot_zeroPadding_x,
             zero_pad_y=self.plot_zeroPadding_z,
             figure=self.figure,
